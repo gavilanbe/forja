@@ -1,0 +1,343 @@
+/* Primitivas visuales pixel: marco, botón, chip, barra XP, modal.
+   Geometría entera, bordes de 2 px, esquinas recortadas de 4 px,
+   sombras duras desplazadas. Nada de sombras suaves ni pills. */
+
+:root {
+  --notch-poly: polygon(
+    0 var(--notch),
+    var(--notch) var(--notch),
+    var(--notch) 0,
+    calc(100% - var(--notch)) 0,
+    calc(100% - var(--notch)) var(--notch),
+    100% var(--notch),
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    var(--notch) 100%,
+    var(--notch) calc(100% - var(--notch)),
+    0 calc(100% - var(--notch))
+  );
+}
+
+/* ── PixelFrame ─────────────────────────────────────────────────
+   Arcade: contorno negro SIEMPRE; el tono se expresa como marquesina
+   interior (banda superior) en lugar de teñir el borde. */
+.pxframe {
+  --frame-border: var(--outline);
+  --frame-bg: var(--surface);
+  --frame-accent: var(--steel-dark);
+  filter: drop-shadow(var(--hard-shadow));
+}
+
+.pxframe--raised {
+  --frame-bg: var(--surface-raised);
+}
+
+.pxframe--flat {
+  filter: none;
+}
+
+.pxframe--ember {
+  --frame-accent: var(--ember);
+}
+
+.pxframe--gold {
+  --frame-accent: var(--gold);
+}
+
+.pxframe--danger {
+  --frame-accent: var(--danger);
+}
+
+.pxframe__body {
+  box-shadow: inset 0 3px 0 var(--frame-accent);
+}
+
+.pxframe__edge {
+  background: var(--frame-border);
+  clip-path: var(--notch-poly);
+  padding: var(--border-px);
+}
+
+.pxframe__body {
+  background: var(--frame-bg);
+  clip-path: var(--notch-poly);
+  padding: var(--s4);
+}
+
+.pxframe--tight .pxframe__body {
+  padding: var(--s3);
+}
+
+/* ── PixelButton ────────────────────────────────────────────── */
+.pxbtn {
+  --btn-face: var(--surface-raised);
+  --btn-edge: var(--outline);
+  --btn-text: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  min-height: var(--touch);
+  padding: var(--s2) var(--s4);
+  background: var(--btn-edge);
+  clip-path: var(--notch-poly);
+  position: relative;
+  color: var(--btn-text);
+  font-family: var(--font-pixel);
+  font-size: var(--fs-pixel-sm);
+  text-transform: uppercase;
+  line-height: 1.4;
+  text-align: center;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pxbtn::before {
+  content: "";
+  position: absolute;
+  inset: var(--border-px);
+  background: var(--btn-face);
+  clip-path: var(--notch-poly);
+}
+
+.pxbtn > * {
+  position: relative;
+}
+
+.pxbtn-wrap {
+  filter: drop-shadow(var(--hard-shadow));
+  display: inline-block;
+}
+
+.pxbtn-wrap--block,
+.pxbtn-wrap--block .pxbtn {
+  display: block;
+  width: 100%;
+}
+
+.pxbtn:active {
+  transform: translateY(3px);
+}
+
+.pxbtn-wrap:has(.pxbtn:active) {
+  filter: drop-shadow(0 1px 0 var(--shadow));
+}
+
+.pxbtn:disabled {
+  opacity: 0.45;
+  transform: none;
+}
+
+.pxbtn--primary {
+  --btn-face: var(--ember);
+  --btn-text: #1c0a00;
+}
+
+.pxbtn--gold {
+  --btn-face: var(--gold);
+  --btn-text: #241a00;
+}
+
+.pxbtn--done {
+  --btn-face: var(--done);
+  --btn-text: #002b27;
+}
+
+.pxbtn--danger {
+  --btn-face: #2b0d0d;
+  --btn-text: var(--danger);
+}
+
+.pxbtn--ghost {
+  --btn-face: var(--surface-raised);
+  --btn-text: var(--steel-light);
+}
+
+.pxbtn--big {
+  min-height: var(--touch-lg);
+  font-size: var(--fs-pixel-md);
+  padding: var(--s3) var(--s5);
+}
+
+.pxbtn--sans {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  text-transform: none;
+}
+
+/* ── StatusChip ─────────────────────────────────────────────── */
+.chip {
+  --chip-color: var(--text-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border: var(--border-px) solid var(--chip-color);
+  color: var(--chip-color);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  background: var(--bg-deep);
+  clip-path: polygon(
+    0 2px, 2px 2px, 2px 0,
+    calc(100% - 2px) 0, calc(100% - 2px) 2px, 100% 2px,
+    100% calc(100% - 2px), calc(100% - 2px) calc(100% - 2px),
+    calc(100% - 2px) 100%, 2px 100%, 2px calc(100% - 2px), 0 calc(100% - 2px)
+  );
+}
+
+.chip--done { --chip-color: var(--done); }
+.chip--gold { --chip-color: var(--gold); }
+.chip--ember { --chip-color: var(--ember); }
+.chip--blue { --chip-color: var(--blue); }
+.chip--warn { --chip-color: var(--warn); }
+.chip--danger { --chip-color: var(--danger); }
+
+.chip__dot {
+  width: 6px;
+  height: 6px;
+  background: var(--chip-color);
+}
+
+/* ── XPBar: barra LED segmentada de marcador ────────────────── */
+.xpbar {
+  border: var(--border-px) solid var(--outline);
+  background: var(--bg-deep);
+  height: 16px;
+  padding: 2px;
+}
+
+.xpbar__fill {
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--gold) 0 8px,
+    var(--outline) 8px 10px
+  );
+  transition: width 0.4s steps(8);
+}
+
+.xpbar--ember .xpbar__fill {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--ember) 0 8px,
+    var(--outline) 8px 10px
+  );
+}
+
+/* ── PixelModal ─────────────────────────────────────────────── */
+.pxmodal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 5, 10, 0.78);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 60;
+  padding: var(--s4);
+  padding-bottom: calc(var(--s5) + env(safe-area-inset-bottom));
+}
+
+.pxmodal-overlay--center {
+  align-items: center;
+}
+
+.pxmodal {
+  width: 100%;
+  max-width: 440px;
+  max-height: 82dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.pxmodal .pxframe__body {
+  overflow-y: auto;
+  max-height: calc(82dvh - 8px);
+}
+
+.pxmodal:focus {
+  outline: none;
+}
+
+.pxmodal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s2);
+  margin-bottom: var(--s3);
+}
+
+.pxmodal__title {
+  font-family: var(--font-pixel);
+  font-size: var(--fs-pixel-sm);
+  text-transform: uppercase;
+  color: var(--gold);
+  padding-top: 6px;
+  line-height: 1.6;
+}
+
+.pxmodal__close {
+  flex-shrink: 0;
+  width: var(--touch);
+  height: var(--touch);
+  margin: -6px -6px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--border-px) solid var(--steel);
+  background: var(--surface);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pxmodal__close:active {
+  background: var(--steel-dark);
+}
+
+/* Aspa pixel dibujada con sombras duras: sin caracteres Unicode ni emojis. */
+.px-x {
+  display: block;
+  width: 2px;
+  height: 2px;
+  background: currentColor;
+  color: var(--text-dim);
+  box-shadow:
+    2px 2px 0 currentColor,
+    4px 4px 0 currentColor,
+    6px 6px 0 currentColor,
+    8px 8px 0 currentColor,
+    -2px -2px 0 currentColor,
+    -4px -4px 0 currentColor,
+    -6px -6px 0 currentColor,
+    -8px -8px 0 currentColor,
+    2px -2px 0 currentColor,
+    4px -4px 0 currentColor,
+    6px -6px 0 currentColor,
+    8px -8px 0 currentColor,
+    -2px 2px 0 currentColor,
+    -4px 4px 0 currentColor,
+    -6px 6px 0 currentColor,
+    -8px 8px 0 currentColor;
+}
+
+/* ── Separador remachado ────────────────────────────────────── */
+.rivet-rule {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin: var(--s4) 0;
+  color: var(--steel);
+}
+
+.rivet-rule::before,
+.rivet-rule::after {
+  content: "";
+  flex: 1;
+  height: 2px;
+  background: var(--steel-dark);
+}

@@ -1,0 +1,1671 @@
+/* Dirección C — ACERO ARCADE.
+   Recreativa de los 90: negro azulado con rayas diagonales de acero,
+   marquesinas con bombillas, Press Start 2P a gritos y animación SOLO por
+   steps() y saltos enteros de píxel. Todo scoped bajo .dir-c. */
+
+.dir-c {
+  --c-bg: #0a0a12;
+  --c-ink: #000006;
+  --c-fire: #ff6b1a;
+  --c-fire-dk: #c24d0e;
+  --c-volt: #ffd23e;
+  --c-volt-dk: #d9a413;
+  --c-white: #ffffff;
+  --c-teal: #22d3c5;
+  --c-teal-dk: #128f86;
+  --c-magenta: #ff3d81;
+  --c-steel: #4a5a74;
+  --c-steel-lt: #9fb2d0;
+  --c-steel-dp: #2b3750;
+  --c-danger: #ff4040;
+
+  background:
+    radial-gradient(ellipse 130% 30% at 50% 0%, rgba(255, 210, 62, 0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 130% 30% at 50% 100%, rgba(255, 107, 26, 0.07) 0%, transparent 70%),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(159, 178, 208, 0.045) 0px,
+      rgba(159, 178, 208, 0.045) 2px,
+      transparent 2px,
+      transparent 16px
+    ),
+    var(--c-bg);
+  color: #e8ecf4;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.dir-c .devart-h {
+  color: var(--c-volt);
+  text-shadow: 2px 2px 0 var(--c-ink);
+}
+
+.dir-c .c-todo {
+  padding: 24px;
+  color: #8fa0bd;
+  font-size: 13px;
+}
+
+/* ── Panel base: chapa arcade con borde duro ─────────────────────────────── */
+
+.dir-c .c-panel {
+  background: #10101c;
+  border: 3px solid var(--c-ink);
+  outline: 2px solid var(--c-steel);
+  box-shadow: 0 6px 0 var(--c-ink);
+  padding: 14px;
+  font-size: 13px;
+  color: #cdd6e6;
+}
+
+.dir-c .c-panel h3 {
+  font-family: "Press Start 2P", monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--c-fire);
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 0 var(--c-ink);
+}
+
+.dir-c .c-panel ul {
+  padding-left: 16px;
+  display: grid;
+  gap: 4px;
+  font-size: 12.5px;
+}
+
+.dir-c .c-panel p {
+  margin-bottom: 8px;
+}
+
+.c-bible__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 16px;
+  padding: 14px;
+}
+
+.c-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.c-swatch {
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--c-ink);
+  display: inline-block;
+}
+
+.c-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  margin-top: 8px;
+}
+
+/* ── Tipografía arcade ───────────────────────────────────────────────────── */
+
+.dir-c .c-shout {
+  font-family: "Press Start 2P", monospace;
+  font-size: 26px;
+  color: var(--c-volt);
+  transform: rotate(-3deg);
+  display: inline-block;
+  text-shadow:
+    3px 3px 0 var(--c-fire),
+    6px 6px 0 var(--c-ink);
+  margin: 10px 0 12px;
+}
+
+.dir-c .c-score {
+  font-family: "Press Start 2P", monospace;
+  font-size: 15px;
+  color: var(--c-white);
+  text-shadow: 2px 2px 0 var(--c-ink);
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+/* ── Marquesina con bombillas ────────────────────────────────────────────── */
+
+.dir-c .c-marquee {
+  border: 3px solid var(--c-ink);
+  outline: 2px solid var(--c-volt-dk);
+  background: #191227;
+  padding: 18px 16px;
+  text-align: center;
+  position: relative;
+}
+
+.dir-c .c-marquee::before,
+.dir-c .c-marquee::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background-image: radial-gradient(circle 2.5px at 10px 4px, var(--c-volt) 0 2.5px, rgba(0, 0, 6, 0.9) 2.5px);
+  background-size: 20px 8px;
+  background-repeat: repeat-x;
+}
+
+.dir-c .c-marquee::before {
+  top: 2px;
+}
+
+.dir-c .c-marquee::after {
+  bottom: 2px;
+}
+
+.dir-c .c-marquee__text {
+  font-family: "Press Start 2P", monospace;
+  font-size: 18px;
+  color: var(--c-volt);
+  text-shadow: 2px 2px 0 var(--c-fire-dk), 4px 4px 0 var(--c-ink);
+}
+
+/* ── Pila de discos (sprites) ────────────────────────────────────────────── */
+
+.c-discstack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.c-discstack canvas {
+  display: block;
+}
+
+/* ═══ MOTION LAB ══════════════════════════════════════════════════════════ */
+
+.dir-c .c-motion {
+  display: grid;
+  gap: 18px;
+  padding: 0 14px 24px;
+  max-width: 720px;
+}
+
+.dir-c .c-scene {
+  background: #10101c;
+  border: 3px solid var(--c-ink);
+  outline: 2px solid var(--c-steel);
+  box-shadow: 0 6px 0 var(--c-ink);
+}
+
+.dir-c .c-scene__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 3px solid var(--c-ink);
+  background: #141327;
+}
+
+.dir-c .c-scene__head h3 {
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+  color: var(--c-volt);
+  text-shadow: 2px 2px 0 var(--c-ink);
+}
+
+.dir-c .c-scene__play {
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  padding: 8px 12px;
+  min-height: 34px;
+  background: var(--c-fire);
+  color: var(--c-ink);
+  border: 3px solid var(--c-ink);
+  box-shadow: 0 3px 0 var(--c-ink);
+  cursor: pointer;
+}
+
+.dir-c .c-scene__play:active {
+  transform: translateY(3px);
+  box-shadow: none;
+}
+
+.dir-c .c-scene__play:disabled {
+  background: var(--c-steel);
+  cursor: default;
+}
+
+.dir-c .c-scene__note {
+  padding: 10px 12px 12px;
+  font-size: 12px;
+  color: #93a2bd;
+  border-top: 2px solid #1c2230;
+}
+
+.dir-c .c-scene__stage {
+  padding: 12px;
+}
+
+.dir-c .c-stage {
+  position: relative;
+  height: 240px;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(-45deg, rgba(159, 178, 208, 0.05) 0 2px, transparent 2px 14px),
+    #0b0b15;
+  border: 3px solid var(--c-ink);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dir-c .c-stage--shake {
+    animation: c-shake 0.24s steps(1, end);
+  }
+  .dir-c .c-stage--tap {
+    animation: c-tap 0.24s steps(1, end);
+  }
+}
+
+@keyframes c-shake {
+  0% { transform: translate(-3px, 2px); }
+  25% { transform: translate(3px, -2px); }
+  50% { transform: translate(-2px, -1px); }
+  75% { transform: translate(2px, 1px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes c-tap {
+  0% { transform: translate(0, 2px); }
+  100% { transform: translate(0, 0); }
+}
+
+.dir-c .c-flash {
+  position: absolute;
+  inset: 0;
+  background: var(--c-white);
+  pointer-events: none;
+  z-index: 6;
+  animation: c-flash 0.1s steps(1, end) forwards;
+}
+
+@keyframes c-flash {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dir-c .c-flash {
+    animation: none;
+    opacity: 0;
+    outline: 4px solid var(--c-volt);
+    outline-offset: -4px;
+  }
+}
+
+.dir-c .c-hud {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  z-index: 3;
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.dir-c .c-hud__score {
+  font-family: "Press Start 2P", monospace;
+  font-size: 12px;
+  color: var(--c-white);
+  text-shadow: 2px 2px 0 var(--c-ink);
+}
+
+.dir-c .c-hud__delta {
+  font-family: "Press Start 2P", monospace;
+  font-size: 11px;
+  color: var(--c-volt);
+  transform: rotate(-3deg);
+  text-shadow: 2px 2px 0 var(--c-ink);
+}
+
+.dir-c .c-stage__anvil {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+}
+
+.dir-c .c-stage__char {
+  position: absolute;
+  left: 26px;
+  bottom: 4px;
+}
+
+.dir-c .c-stage__char--rest {
+  left: 50%;
+  transform: translateX(-60%);
+}
+
+.dir-c .c-stage__char--left {
+  left: 10px;
+}
+
+.dir-c .c-stage__char--right {
+  left: auto;
+  right: 10px;
+}
+
+.dir-c .c-stage__sparks {
+  position: absolute;
+  right: 60px;
+  bottom: 90px;
+  z-index: 4;
+}
+
+.dir-c .c-stage__sparks--seal {
+  right: auto;
+  left: 50%;
+  bottom: auto;
+  top: 60px;
+}
+
+.dir-c .c-ticket {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 5;
+  background: var(--c-ink);
+  border: 2px solid var(--c-volt);
+  color: #e8ecf4;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 10px;
+}
+
+.dir-c .c-ticket b {
+  color: var(--c-volt);
+}
+
+.dir-c .c-ticket--teal {
+  border-color: var(--c-teal);
+}
+
+.dir-c .c-ticket--teal b {
+  color: var(--c-teal);
+}
+
+.dir-c .c-ticket--magenta {
+  border-color: var(--c-magenta);
+}
+
+.dir-c .c-stamp {
+  position: absolute;
+  top: 34px;
+  right: 14px;
+  z-index: 5;
+  font-family: "Press Start 2P", monospace;
+  font-size: 13px;
+  color: var(--c-volt);
+  background: var(--c-ink);
+  border: 3px solid var(--c-volt);
+  padding: 10px 12px;
+  transform: rotate(-3deg);
+  text-shadow: 2px 2px 0 var(--c-fire-dk);
+}
+
+.dir-c .c-stamp--teal {
+  color: var(--c-teal);
+  border-color: var(--c-teal);
+  text-shadow: 2px 2px 0 var(--c-teal-dk);
+}
+
+.dir-c .c-stamp--magenta {
+  color: var(--c-magenta);
+  border-color: var(--c-magenta);
+  text-shadow: 2px 2px 0 #7c1439;
+  top: auto;
+  bottom: 12px;
+  right: auto;
+  left: 50%;
+  width: max-content;
+  font-size: 10px;
+  transform: translateX(-50%) rotate(-3deg);
+}
+
+/* Semáforo de recreativa */
+
+.dir-c .c-lights {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+
+.dir-c .c-light {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  font-family: "Press Start 2P", monospace;
+  font-size: 14px;
+  color: #3a4358;
+  background: #12121f;
+  border: 3px solid var(--c-ink);
+  outline: 2px solid var(--c-steel-dp);
+}
+
+.dir-c .c-light--on0 {
+  background: var(--c-danger);
+  color: var(--c-ink);
+  outline-color: var(--c-danger);
+}
+
+.dir-c .c-light--on1 {
+  background: var(--c-volt);
+  color: var(--c-ink);
+  outline-color: var(--c-volt);
+}
+
+.dir-c .c-light--on2 {
+  background: var(--c-teal);
+  color: var(--c-ink);
+  outline-color: var(--c-teal);
+}
+
+.dir-c .c-led {
+  font-family: "Press Start 2P", monospace;
+  font-size: 34px;
+  color: #263049;
+  background: #06060d;
+  border: 3px solid var(--c-ink);
+  outline: 2px solid var(--c-steel-dp);
+  padding: 12px 16px;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  letter-spacing: 2px;
+  z-index: 3;
+}
+
+.dir-c .c-led--on {
+  color: var(--c-teal);
+  text-shadow: 0 0 0 var(--c-teal), 2px 2px 0 #063a36;
+}
+
+/* Torre de fuerza con campana */
+
+.dir-c .c-tower {
+  position: absolute;
+  right: 18px;
+  top: 8px;
+  bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+}
+
+.dir-c .c-tower__rail {
+  flex: 1;
+  width: 22px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 4px;
+  padding: 4px;
+  background: var(--c-ink);
+  border: 2px solid var(--c-steel);
+}
+
+.dir-c .c-tower__step {
+  flex: 1;
+  background: #1a1c2c;
+}
+
+.dir-c .c-tower__step--lit {
+  background: var(--c-fire);
+}
+
+.dir-c .c-tower__rail .c-tower__step--lit:last-child {
+  background: var(--c-magenta);
+}
+
+.dir-c .c-tower__kg {
+  font-family: "Press Start 2P", monospace;
+  font-size: 11px;
+  color: var(--c-white);
+  margin-top: 6px;
+  text-shadow: 2px 2px 0 var(--c-ink);
+}
+
+.dir-c .c-stage__burst {
+  position: absolute;
+  left: 150px;
+  top: 30px;
+  z-index: 4;
+}
+
+.dir-c .c-shout--stamp {
+  position: absolute;
+  left: 24px;
+  top: 24px;
+  z-index: 5;
+  font-size: 30px;
+  margin: 0;
+}
+
+.dir-c .c-shout--inline {
+  font-size: 20px;
+  margin: 0;
+  vertical-align: middle;
+}
+
+/* Cambio de arma (power-up) */
+
+.dir-c .c-swap {
+  position: absolute;
+  left: 50%;
+  top: 30px;
+  width: 250px;
+  margin-left: -70px;
+  background: #141327;
+  border: 3px solid var(--c-ink);
+  outline: 2px solid var(--c-fire);
+  padding: 14px;
+  display: grid;
+  gap: 4px;
+  z-index: 2;
+}
+
+.dir-c .c-swap--edge {
+  transform: scaleX(0.12);
+}
+
+.dir-c .c-swap--b {
+  outline-color: var(--c-teal);
+}
+
+.dir-c .c-swap b {
+  font-size: 20px;
+  color: var(--c-white);
+}
+
+.dir-c .c-swap__k {
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  color: var(--c-fire);
+}
+
+.dir-c .c-swap__k--teal {
+  color: var(--c-teal);
+}
+
+.dir-c .c-swap__meta {
+  font-size: 12.5px;
+  color: #93a2bd;
+}
+
+.dir-c .c-swap__seal {
+  position: absolute;
+  right: -26px;
+  bottom: -26px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dir-c .c-swap__seal--pop {
+    animation: c-pop 0.24s steps(2, end);
+  }
+}
+
+@keyframes c-pop {
+  0% { transform: scale(2.4); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+
+/* RESULTS (escena 5) */
+
+.dir-c .c-stage--results {
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 210, 62, 0.04) 0 2px, transparent 2px 8px),
+    #0b0b15;
+}
+
+.dir-c .c-results__title {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 18px;
+  color: var(--c-fire);
+  text-shadow: 2px 2px 0 var(--c-ink);
+  z-index: 2;
+}
+
+.dir-c .c-results__seal {
+  position: absolute;
+  left: 40px;
+  top: 44px;
+  z-index: 3;
+}
+
+.dir-c .c-results__seal--p1 {
+  top: -30px;
+}
+
+.dir-c .c-results__seal--p2 {
+  top: 60px;
+}
+
+.dir-c .c-results__rank {
+  position: absolute;
+  right: 14px;
+  top: 48px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 12px;
+  color: #cdd6e6;
+  z-index: 4;
+}
+
+.dir-c .c-results__score {
+  position: absolute;
+  right: 14px;
+  top: 96px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 15px;
+  color: var(--c-white);
+  text-shadow: 2px 2px 0 var(--c-ink);
+  z-index: 4;
+}
+
+/* Combo semanal (escena 6) */
+
+.dir-c .c-stage--flame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding-top: 16px;
+}
+
+.dir-c .c-combo {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  z-index: 2;
+}
+
+.dir-c .c-combo__cell {
+  background: var(--c-ink);
+  border: 2px solid var(--c-steel-dp);
+  padding: 4px;
+  display: grid;
+  place-items: center;
+}
+
+.dir-c .c-combo__x {
+  font-family: "Press Start 2P", monospace;
+  font-size: 20px;
+  color: var(--c-volt);
+  margin-left: 6px;
+  text-shadow: 2px 2px 0 var(--c-ink);
+}
+
+.dir-c .c-combo__x--max {
+  color: var(--c-magenta);
+  transform: rotate(-3deg);
+}
+
+.dir-c .c-stage__bonfire {
+  z-index: 1;
+}
+
+/* Cortina de marquesina (escena 7) */
+
+.dir-c .c-stage--unlock {
+  display: grid;
+  place-items: center;
+}
+
+.dir-c .c-booth {
+  position: relative;
+  overflow: hidden;
+  border: 3px solid var(--c-ink);
+  outline: 2px solid var(--c-volt-dk);
+}
+
+.dir-c .c-booth__node {
+  display: block;
+}
+
+.dir-c .c-booth__curtain {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, var(--c-fire) 0 18px, var(--c-fire-dk) 18px 36px);
+  border-bottom: 6px solid var(--c-volt);
+  z-index: 2;
+}
+
+.dir-c .c-booth__curtain--p1 { transform: translateY(-34%); }
+.dir-c .c-booth__curtain--p2 { transform: translateY(-67%); }
+.dir-c .c-booth__curtain--p3 { transform: translateY(-101%); }
+
+.dir-c .c-new {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 16px;
+  color: var(--c-magenta);
+  transform: rotate(-3deg);
+  text-shadow: 2px 2px 0 var(--c-ink);
+  z-index: 5;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dir-c .c-ready--blink,
+  .dir-c .c-new--blink {
+    animation: c-blink 0.7s steps(1, end) infinite;
+  }
+  .dir-c .c-map__node--bounce {
+    animation: c-bounce 0.5s steps(1, end) infinite;
+  }
+}
+
+@keyframes c-blink {
+  0% { visibility: visible; }
+  50% { visibility: hidden; }
+  100% { visibility: visible; }
+}
+
+@keyframes c-bounce {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
+
+/* ═══ DATA-VIZ LAB ════════════════════════════════════════════════════════ */
+
+.dir-c .c-data {
+  padding-bottom: 30px;
+}
+
+.dir-c .c-data__rack {
+  display: grid;
+  gap: 6px;
+  padding: 8px 14px;
+}
+
+.dir-c .c-data__rackrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #10101c;
+  border: 3px solid var(--c-ink);
+  padding: 4px 12px;
+  width: fit-content;
+}
+
+.dir-c .c-data__kg {
+  font-family: "Press Start 2P", monospace;
+  font-size: 16px;
+  color: var(--c-white);
+  min-width: 92px;
+  text-shadow: 2px 2px 0 var(--c-ink);
+}
+
+.dir-c .c-data__kg i {
+  font-style: normal;
+  font-size: 9px;
+  color: var(--c-volt);
+  margin-left: 4px;
+}
+
+.dir-c .c-data__date {
+  font-size: 12px;
+  font-weight: 700;
+  color: #93a2bd;
+}
+
+.dir-c .c-data__sessions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 8px 14px;
+}
+
+.dir-c .c-data__session {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: #10101c;
+  border: 3px solid var(--c-ink);
+  padding: 10px;
+}
+
+.dir-c .c-data__meter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.dir-c .c-data__danger {
+  font-family: "Press Start 2P", monospace;
+  font-size: 7px;
+  color: var(--c-danger);
+}
+
+.dir-c .c-pips {
+  display: flex;
+  gap: 3px;
+}
+
+.dir-c .c-pip {
+  width: 8px;
+  height: 12px;
+  background: var(--c-fire);
+  border: 2px solid var(--c-ink);
+}
+
+.dir-c .c-pip--last {
+  background: var(--c-white);
+  height: 16px;
+  margin-top: -4px;
+}
+
+.dir-c .c-data__mini {
+  font-size: 11.5px;
+  color: #aeb9cf;
+  text-align: center;
+  display: grid;
+}
+
+.dir-c .c-data__mini b {
+  color: #e8ecf4;
+}
+
+.dir-c .c-data__mini i {
+  font-style: normal;
+  color: #6b7893;
+  font-size: 10.5px;
+}
+
+.dir-c .c-data__weeks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 14px;
+}
+
+.dir-c .c-data__weeks--bottom {
+  align-items: flex-end;
+}
+
+.dir-c .c-data__week {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: #10101c;
+  border: 3px solid var(--c-ink);
+  padding: 10px;
+}
+
+.dir-c .c-data__flames {
+  display: flex;
+  gap: 3px;
+}
+
+.dir-c .c-data__mult {
+  font-family: "Press Start 2P", monospace;
+  font-size: 13px;
+  color: var(--c-volt);
+}
+
+.dir-c .c-data__mult--max {
+  color: var(--c-magenta);
+  transform: rotate(-3deg);
+}
+
+.dir-c .c-data__records {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 8px 14px 16px;
+}
+
+.dir-c .c-medal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: #10101c;
+  border: 3px solid var(--c-ink);
+  outline: 2px solid var(--c-volt-dk);
+  padding: 16px 18px 10px;
+}
+
+.dir-c .c-medal__burst {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 96px;
+  height: 96px;
+  transform: translateX(-50%);
+  background: repeating-conic-gradient(
+    from 8deg,
+    rgba(255, 61, 129, 0.35) 0deg 12deg,
+    transparent 12deg 30deg,
+    rgba(255, 210, 62, 0.3) 30deg 42deg,
+    transparent 42deg 60deg
+  );
+  z-index: 0;
+}
+
+.dir-c .c-medal canvas {
+  position: relative;
+  z-index: 1;
+}
+
+.dir-c .c-medal__plate {
+  font-family: "Press Start 2P", monospace;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--c-ink);
+  background: var(--c-volt);
+  border: 2px solid var(--c-ink);
+  padding: 4px 8px;
+  z-index: 1;
+}
+
+.dir-c .c-fix {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.dir-c .c-fix__panel {
+  position: relative;
+}
+
+.dir-c .c-fix__seal {
+  position: absolute;
+  right: -10px;
+  top: -10px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 11px;
+  background: var(--c-teal);
+  color: var(--c-ink);
+  border: 3px solid var(--c-ink);
+  padding: 5px 7px;
+  transform: rotate(-3deg);
+}
+
+/* ═══ VERTICAL SLICE ══════════════════════════════════════════════════════ */
+
+.dir-c .c-slice {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0 30px;
+}
+
+.dir-c .c-app {
+  width: 390px;
+  min-height: 780px;
+  background:
+    radial-gradient(ellipse 120% 20% at 50% 0%, rgba(255, 210, 62, 0.07), transparent 70%),
+    repeating-linear-gradient(-45deg, rgba(159, 178, 208, 0.04) 0 2px, transparent 2px 14px),
+    var(--c-bg);
+  border: 3px solid var(--c-ink);
+  outline: 2px solid var(--c-steel-dp);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 12px 18px;
+  overflow: hidden;
+}
+
+.dir-c .c-app__marquee {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+}
+
+.dir-c .c-marquee__k {
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  color: var(--c-fire);
+}
+
+.dir-c .c-marquee__sub {
+  font-family: "Press Start 2P", monospace;
+  font-size: 11px;
+  color: var(--c-white);
+}
+
+.dir-c .c-app__hero {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding-top: 8px;
+}
+
+.dir-c .c-app__heroname {
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+  color: var(--c-teal);
+  margin-bottom: 4px;
+}
+
+.dir-c .c-board {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.dir-c .c-board__cell {
+  background: var(--c-ink);
+  border: 3px solid var(--c-steel-dp);
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  padding: 10px 4px;
+}
+
+.dir-c .c-board__cell b {
+  font-family: "Press Start 2P", monospace;
+  font-size: 18px;
+  color: var(--c-volt);
+}
+
+.dir-c .c-board__cell span {
+  font-size: 11px;
+  color: #93a2bd;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.dir-c .c-coinbtn {
+  width: 100%;
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 16px;
+  color: var(--c-ink);
+  background: var(--c-volt);
+  border: 3px solid var(--c-ink);
+  box-shadow:
+    inset 0 -6px 0 var(--c-volt-dk),
+    0 6px 0 var(--c-ink);
+  cursor: pointer;
+}
+
+.dir-c .c-coinbtn:active {
+  transform: translateY(6px);
+  box-shadow: inset 0 -6px 0 var(--c-volt-dk);
+}
+
+.dir-c .c-coinbtn--hit {
+  background: var(--c-fire);
+  box-shadow:
+    inset 0 -6px 0 var(--c-fire-dk),
+    0 6px 0 var(--c-ink);
+  color: var(--c-white);
+  text-shadow: 2px 2px 0 var(--c-ink);
+}
+
+.dir-c .c-coinbtn__coin {
+  display: grid;
+  place-items: center;
+}
+
+.dir-c .c-app__combo {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dir-c .c-app__combotxt {
+  font-size: 12px;
+  color: #93a2bd;
+  margin-left: 8px;
+}
+
+.dir-c .c-app__combotxt b {
+  font-family: "Press Start 2P", monospace;
+  font-size: 12px;
+  color: var(--c-volt);
+}
+
+/* Registro */
+
+.dir-c .c-hudbar {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  background: var(--c-ink);
+  border: 3px solid var(--c-steel-dp);
+  border-left: 6px solid var(--c-fire);
+  padding: 10px 12px;
+}
+
+.dir-c .c-hudbar__name {
+  font-family: "Press Start 2P", monospace;
+  font-size: 12px;
+  color: var(--c-white);
+}
+
+.dir-c .c-hudbar__sub {
+  font-size: 12px;
+  color: #93a2bd;
+}
+
+.dir-c .c-serierow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dir-c .c-serierow__k {
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  color: #93a2bd;
+}
+
+.dir-c .c-seriepip {
+  width: 34px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  font-family: "Press Start 2P", monospace;
+  font-size: 11px;
+  color: #4b5670;
+  background: #10101c;
+  border: 3px solid var(--c-ink);
+}
+
+.dir-c .c-seriepip--done {
+  background: var(--c-fire);
+  color: var(--c-ink);
+}
+
+.dir-c .c-seriepip--now {
+  border-color: var(--c-volt);
+  color: var(--c-volt);
+}
+
+.dir-c .c-bigcounters {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.dir-c .c-counter {
+  background: var(--c-ink);
+  border: 3px solid var(--c-steel-dp);
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+}
+
+.dir-c .c-counter__k {
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  color: var(--c-fire);
+}
+
+.dir-c .c-counter__num {
+  font-family: "Press Start 2P", monospace;
+  font-size: 30px;
+  color: var(--c-white);
+  text-shadow: 3px 3px 0 #1c2230;
+}
+
+.dir-c .c-counter__u {
+  font-size: 11px;
+  color: #93a2bd;
+}
+
+.dir-c .c-counter__btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.dir-c .c-counter__btns button {
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+  min-width: 56px;
+  min-height: 36px;
+  background: #1a2030;
+  color: #e8ecf4;
+  border: 3px solid var(--c-ink);
+  box-shadow: 0 3px 0 var(--c-ink);
+  cursor: pointer;
+}
+
+.dir-c .c-rirheat {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dir-c .c-rirheat__k {
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+  color: #93a2bd;
+  margin-right: 2px;
+}
+
+.dir-c .c-rirheat__opt {
+  flex: 1;
+  min-height: 40px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 12px;
+  border: 3px solid var(--c-ink);
+  cursor: pointer;
+  color: var(--c-ink);
+}
+
+.dir-c .c-rirheat__opt--0 { background: var(--c-danger); }
+.dir-c .c-rirheat__opt--1 { background: var(--c-fire); }
+.dir-c .c-rirheat__opt--2 { background: var(--c-volt); }
+.dir-c .c-rirheat__opt--3 { background: var(--c-teal); }
+.dir-c .c-rirheat__opt--4 { background: var(--c-steel); }
+
+.dir-c .c-rirheat__opt--on {
+  outline: 3px solid var(--c-white);
+  outline-offset: 1px;
+}
+
+.dir-c .c-rirheat__danger {
+  font-family: "Press Start 2P", monospace;
+  font-size: 7px;
+  color: var(--c-danger);
+  writing-mode: initial;
+}
+
+.dir-c .c-app__floor {
+  margin-top: auto;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-top: 3px solid var(--c-ink);
+  padding-top: 8px;
+}
+
+.dir-c .c-app__anvil {
+  order: 2;
+}
+
+/* Descanso */
+
+.dir-c .c-app--rest {
+  justify-content: flex-start;
+}
+
+.dir-c .c-kicker {
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  color: #93a2bd;
+}
+
+.dir-c .c-led--giant {
+  position: static;
+  font-size: 64px;
+  padding: 20px 26px;
+  color: var(--c-teal);
+  text-shadow: 4px 4px 0 #063a36;
+}
+
+.dir-c .c-ready {
+  font-family: "Press Start 2P", monospace;
+  font-size: 16px;
+  color: var(--c-volt);
+  text-shadow: 2px 2px 0 var(--c-ink);
+}
+
+.dir-c .c-app__rester {
+  padding: 6px 0;
+}
+
+.dir-c .c-app--rest .c-ticket {
+  position: static;
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  padding: 12px;
+}
+
+.dir-c .c-restrow {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.dir-c .c-btn {
+  min-height: 48px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+  background: #1a2030;
+  color: #e8ecf4;
+  border: 3px solid var(--c-ink);
+  box-shadow: 0 4px 0 var(--c-ink);
+  cursor: pointer;
+}
+
+.dir-c .c-btn--hot {
+  background: var(--c-fire);
+  color: var(--c-ink);
+}
+
+/* Campaña: world map */
+
+.dir-c .c-app--map {
+  gap: 0;
+}
+
+.dir-c .c-map {
+  width: 100%;
+  display: flex;
+  flex-direction: column-reverse;
+  padding: 10px 0;
+}
+
+.dir-c .c-map__lvl {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 4px;
+}
+
+.dir-c .c-map__lvl--r {
+  flex-direction: row-reverse;
+}
+
+.dir-c .c-map__dots {
+  position: absolute;
+  left: 50%;
+  top: -18px;
+  width: 6px;
+  height: 30px;
+  background-image: linear-gradient(var(--c-volt-dk) 0 6px, transparent 6px 12px);
+  background-size: 6px 12px;
+}
+
+.dir-c .c-map__lvl--locked .c-map__dots {
+  background-image: linear-gradient(#2a3346 0 6px, transparent 6px 12px);
+}
+
+.dir-c .c-map__node {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.dir-c .c-map__lvl--locked .c-map__node canvas {
+  filter: brightness(0.45);
+}
+
+.dir-c .c-map__lvl--current .c-map__node {
+  outline: 3px solid var(--c-volt);
+  outline-offset: 2px;
+}
+
+.dir-c .c-map__badge {
+  position: absolute;
+  right: -8px;
+  top: -8px;
+  min-width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+  background: var(--c-steel-dp);
+  color: #93a2bd;
+  border: 3px solid var(--c-ink);
+}
+
+.dir-c .c-map__badge--done {
+  background: var(--c-teal);
+  color: var(--c-ink);
+}
+
+.dir-c .c-map__you {
+  position: absolute;
+  left: 50%;
+  bottom: -18px;
+  transform: translateX(-50%) rotate(-3deg);
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  color: var(--c-magenta);
+}
+
+.dir-c .c-map__label {
+  display: grid;
+  gap: 2px;
+}
+
+.dir-c .c-map__label b {
+  font-size: 15px;
+  color: #e8ecf4;
+}
+
+.dir-c .c-map__label i {
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--c-volt);
+}
+
+.dir-c .c-map__lvl--locked .c-map__label b {
+  color: #55607a;
+}
+
+/* Progreso: RANKING */
+
+.dir-c .c-rank__row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: "Press Start 2P", monospace;
+}
+
+.dir-c .c-rank__from {
+  font-size: 14px;
+  color: #55607a;
+  text-decoration: line-through;
+}
+
+.dir-c .c-rank__arrow {
+  font-size: 12px;
+  color: var(--c-fire);
+}
+
+.dir-c .c-rank__to {
+  font-size: 22px;
+  color: var(--c-white);
+  text-shadow: 2px 2px 0 var(--c-ink);
+}
+
+.dir-c .c-rank__discs {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 4px 8px 0;
+}
+
+.dir-c .c-rank__disc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  color: #aeb9cf;
+}
+
+.dir-c .c-discpile {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+}
+
+.dir-c .c-discpile__d {
+  height: 10px;
+  border: 3px solid var(--c-ink);
+}
+
+.dir-c .c-discpile__d--0 { width: 64px; background: var(--c-fire); }
+.dir-c .c-discpile__d--1 { width: 52px; background: var(--c-volt); }
+.dir-c .c-discpile__d--2 { width: 40px; background: var(--c-steel-lt); }
+
+.dir-c .c-h3 {
+  font-family: "Press Start 2P", monospace;
+  font-size: 11px;
+  color: var(--c-volt);
+  align-self: flex-start;
+  text-shadow: 2px 2px 0 var(--c-ink);
+}
+
+.dir-c .c-rank__medals {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dir-c .c-medal--slice {
+  flex: 1;
+  padding: 12px 6px 8px;
+}
+
+.dir-c .c-medal__ej {
+  font-size: 10.5px;
+  color: #93a2bd;
+  text-align: center;
+}
+
+/* Final: RESULTS */
+
+.dir-c .c-app--results {
+  align-items: center;
+}
+
+.dir-c .c-results__title--big {
+  position: static;
+  font-size: 30px;
+  transform: rotate(-3deg);
+  margin-top: 8px;
+}
+
+.dir-c .c-final__seal {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 12px 0 0;
+}
+
+.dir-c .c-final__burst {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.dir-c .c-final__bell {
+  position: absolute;
+  right: -78px;
+  top: 6px;
+}
+
+.dir-c .c-final__rank {
+  font-family: "Press Start 2P", monospace;
+  font-size: 13px;
+  color: #cdd6e6;
+}
+
+.dir-c .c-final__lines {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+  background: var(--c-ink);
+  border: 3px solid var(--c-steel-dp);
+  padding: 14px;
+}
+
+.dir-c .c-final__lines > div {
+  display: flex;
+  justify-content: space-between;
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+  color: #93a2bd;
+}
+
+.dir-c .c-final__lines b {
+  color: var(--c-volt);
+}
+
+.dir-c .c-final__mag {
+  color: var(--c-magenta) !important;
+}
+
+.dir-c .c-final__total {
+  border-top: 3px solid var(--c-steel-dp);
+  padding-top: 10px;
+  font-size: 13px !important;
+  color: var(--c-white) !important;
+}
+
+.dir-c .c-final__total b {
+  font-size: 16px;
+  color: var(--c-white);
+}
+
+.dir-c .c-final__cheer {
+  padding: 2px 0;
+}
+
+/* Ajustes de encuadre del motion lab */
+
+.dir-c .c-stage--rest .c-led {
+  font-size: 20px;
+  padding: 10px 12px;
+}
+
+.dir-c .c-swap {
+  margin-left: -50px;
+  width: 236px;
+}
+
+/* Escena 4: encuadre del panel de cambio de arma */
+
+.dir-c .c-swap {
+  margin-left: -90px;
+}
+
+.dir-c .c-swap__seal {
+  right: -14px;
+  bottom: -30px;
+}
+
+.dir-c .c-stamp--teal {
+  top: auto;
+  bottom: 14px;
+  right: 12px;
+}

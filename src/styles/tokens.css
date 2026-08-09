@@ -1,0 +1,66 @@
+/* FORJA — tokens de diseño · dirección C «ACERO ARCADE».
+   Recreativa de los 90: ~12 colores saturados sobre negro azulado,
+   contorno negro puro, sombreado plano de 2 tonos, contraste altísimo.
+   Grid de 8 px · contornos de 2 px · sombras duras negras. */
+
+:root {
+  /* Paleta arcade */
+  --bg: #0a0a12; /* negro azulado */
+  --bg-deep: #06060c;
+  --surface: #12131d;
+  --surface-raised: #1a1b28;
+  --steel: #4a5a74; /* acero frío */
+  --steel-dark: #2b3750; /* acero profundo */
+  --steel-light: #9fb2d0; /* acero claro */
+  --outline: #000006; /* contorno negro puro */
+  --text: #f2f5fb;
+  --text-dim: #9fb2d0;
+  --ember: #ff6b1a; /* naranja fuego */
+  --ember-deep: #c24d0e;
+  --gold: #ffd23e; /* amarillo eléctrico */
+  --gold-deep: #d9a413;
+  --done: #22d3c5; /* teal neón */
+  --done-deep: #128f86;
+  --magenta: #ff3d81; /* SOLO recompensa */
+  --blue: #22d3c5; /* informativo/alternativa comparte teal */
+  --warn: #ffd23e;
+  --danger: #ff4040;
+  --flash: #ffffff;
+
+  --shadow: rgba(0, 0, 6, 0.9);
+
+  /* Espaciado en grid de 8 px (con medio paso de 4) */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+
+  /* Tipografía: pixel para gritos/marcadores, sans bold para apoyo */
+  --font-pixel: "Press Start 2P", monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+
+  --fs-pixel-xs: 8px;
+  --fs-pixel-sm: 10px;
+  --fs-pixel-md: 13px;
+  --fs-pixel-lg: 18px;
+  --fs-body-sm: 13px;
+  --fs-body: 15px;
+  --fs-body-lg: 17px;
+  --fs-num-lg: 28px;
+  --fs-num-xl: 40px;
+
+  /* Geometría arcade */
+  --border-px: 2px;
+  --notch: 4px; /* esquina pixelada recortada */
+  --hard-shadow: 0 4px 0 var(--outline);
+
+  /* Alturas táctiles */
+  --touch: 44px;
+  --touch-lg: 56px;
+
+  --nav-height: 60px;
+}
