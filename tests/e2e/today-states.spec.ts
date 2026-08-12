@@ -2,7 +2,7 @@
 // descanso, prólogo, bloque forjado y coherencia de la llama.
 
 import { expect, test } from "@playwright/test";
-import { boot, changeClock, completeAllStages } from "./helpers";
+import { boot, changeClock, completeAllStages, openFinishModal } from "./helpers";
 
 test("día programado: el CTA de misión es visible en el primer viewport 360×800", async ({
   page,
@@ -90,7 +90,7 @@ test("la llama se pone al rojo al cumplir el objetivo semanal (Carlos, 3 misione
     await page.reload({ waitUntil: "networkidle" });
     await page.getByRole("button", { name: /Empezar misión/i }).click();
     await completeAllStages(page, "30");
-    await page.getByRole("button", { name: "Terminar misión", exact: true }).click();
+    await openFinishModal(page);
     await page.getByRole("button", { name: "Sellar la misión" }).click();
     await page.getByRole("button", { name: "Volver a la Forja" }).click();
   }

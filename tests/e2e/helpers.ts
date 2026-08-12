@@ -101,3 +101,28 @@ export const completeAllStages = async (page: Page, weight = "40") => {
   }
   throw new Error("completeAllStages: la misión no llegó a la última etapa");
 };
+
+/**
+ * Abre el modal de finalización de forma robusta: si un descanso residual
+ * reaparece entre medias, lo salta y reintenta.
+ */
+export const openFinishModal = async (page: Page) => {
+  for (let i = 0; i < 10; i++) {
+    const finish = page.getByRole("button", { name: "Terminar misión", exact: true });
+    try {
+      await finish.click({ timeout: 3000 });
+      await page
+        .getByRole("button", { name: "Sellar la misión" })
+        .waitFor({ timeout: 3000 });
+      return;
+    } catch {
+      const rest = page.getByRole("button", {
+        name: /^(Saltar|Empezar serie|Continuar)$/
+      });
+      if (await rest.isVisible().catch(() => false)) {
+        await rest.click({ timeout: 2000 }).catch(() => undefined);
+      }
+    }
+  }
+  throw new Error("openFinishModal: no se pudo abrir el modal de finalización");
+};

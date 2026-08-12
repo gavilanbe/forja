@@ -3,7 +3,7 @@
 // finalización jamás duplica XP.
 
 import { expect, test } from "@playwright/test";
-import { boot, completeAllStages, logSet } from "./helpers";
+import { boot, completeAllStages, logSet, openFinishModal } from "./helpers";
 
 const finishNow = async (page: import("@playwright/test").Page) => {
   await page.getByRole("button", { name: "Salir de la misión" }).click();
@@ -39,7 +39,7 @@ test("el plan entero sella una misión COMPLETADA con su recompensa íntegra", a
   await boot(page, context, "2026-08-10");
   await page.getByRole("button", { name: /Empezar misión/i }).click();
   await completeAllStages(page);
-  await page.getByRole("button", { name: "Terminar misión", exact: true }).click();
+  await openFinishModal(page);
   await expect(page.getByText(/Se sellará como COMPLETADA/)).toBeVisible();
   await page.getByRole("button", { name: "Sellar la misión" }).click();
 
@@ -74,7 +74,7 @@ test("omitir series con motivo permite sellar ADAPTADA, nunca completada a media
   // Resto del día completo.
   await page.getByRole("button", { name: "Siguiente etapa" }).click();
   await completeAllStages(page);
-  await page.getByRole("button", { name: "Terminar misión", exact: true }).click();
+  await openFinishModal(page);
   await expect(page.getByText(/Se sellará como ADAPTADA/)).toBeVisible();
   await page.getByRole("button", { name: "Sellar la misión" }).click();
 

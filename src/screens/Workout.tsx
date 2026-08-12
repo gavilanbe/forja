@@ -611,7 +611,6 @@ function SetLogger({
   const [reps, setRepsRaw] = useState<number | null | undefined>(draft?.reps);
   const [rir, setRirRaw] = useState<number>(draft?.rir ?? target.max);
   const [saving, setSaving] = useState(false);
-  const [savedFlash, setSavedFlash] = useState(false);
   const [modal, setModal] = useState<
     null | "tecnica" | "alternativa" | "molestia" | "omitir" | "nota"
   >(null);
@@ -690,8 +689,11 @@ function SetLogger({
         altExerciseId: variant?.nombre ?? undefined
       });
       drafts.delete(draftKey);
-      setSavedFlash(true);
-      setTimeout(() => onSaved(), 350);
+      // El cambio de fase es INMEDIATO y síncrono con el guardado: nada de
+      // temporizadores diferidos que puedan disparar descansos fantasma o
+      // perderse si el componente se remonta (la propia pantalla de descanso
+      // es la confirmación visible de que la serie quedó guardada).
+      onSaved();
     } finally {
       setSaving(false);
     }
@@ -849,18 +851,12 @@ function SetLogger({
         <PixelButton tone="primary" big block disabled={!canSave} onClick={save}>
           Guardar serie
         </PixelButton>
-        <p
-          className={`save-note${savedFlash ? "" : " save-note--hint"}`}
-          role="status"
-          aria-live="polite"
-        >
-          {savedFlash
-            ? "Serie guardada en este dispositivo"
-            : effWeight === null
-              ? "Introduce el peso para poder guardar."
-              : exSets.length > 0
-                ? `${exSets.filter((s) => !s.skipped).length} de ${entry.sets} series guardadas`
-                : ""}
+        <p className="save-note save-note--hint" role="status" aria-live="polite">
+          {effWeight === null
+            ? "Introduce el peso para poder guardar."
+            : exSets.length > 0
+              ? `${exSets.filter((s) => !s.skipped).length} de ${entry.sets} series guardadas`
+              : ""}
         </p>
       </div>
 
