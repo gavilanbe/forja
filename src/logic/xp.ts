@@ -6,6 +6,8 @@ export const XP = {
   seriePrevista: 10,
   misionCompletada: 60,
   misionAdaptada: 60,
+  /** Terminar con trabajo hecho pero sin plan cumplido ni adaptación explícita. */
+  misionParcial: 25,
   capituloCompletado: 150,
   hito: 25
 } as const;

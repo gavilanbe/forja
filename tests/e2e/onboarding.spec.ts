@@ -19,10 +19,15 @@ test("primer inicio: elegir perfil y omitir tutorial lleva a Hoy", async ({
   await expect(page.getByText("Torso A").first()).toBeVisible();
 });
 
-test("tutorial de una pantalla: se puede ver y cerrar", async ({ page, context }) => {
+test("elección de fecha y tutorial: se pueden ver y cerrar", async ({ page, context }) => {
   await setClock(context, "2026-08-10");
   await page.goto("./", { waitUntil: "networkidle" });
   await page.getByRole("button", { name: /Avatar de Carlos/ }).click();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  // Paso nuevo: cuándo empieza la campaña, con consecuencias explicadas.
+  await expect(page.getByText("¿Cuándo se enciende?")).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Empezar hoy/ })).toBeVisible();
+  await expect(page.getByText(/no marca nada como fallado/)).toBeVisible();
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page.getByText("Llama semanal")).toBeVisible();
   await page.getByRole("button", { name: "A la fragua" }).click();

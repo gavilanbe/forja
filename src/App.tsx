@@ -6,21 +6,42 @@ import { KV_ONBOARDED, Onboarding } from "./screens/Onboarding";
 import { NavBar } from "./ui/NavBar";
 import { Today } from "./screens/Today";
 import { Workout } from "./screens/Workout";
-import { MissionComplete } from "./screens/MissionComplete";
-import { Campaign } from "./screens/Campaign";
-import { Progress } from "./screens/Progress";
-import { Codex } from "./screens/Codex";
-import { CodexDetail } from "./screens/CodexDetail";
-import { ProfileScreen } from "./screens/Profile";
 import { UpdateToast } from "./ui/UpdateToast";
 import { useActiveProfile, usePrefs } from "./ui/hooks";
-// Solo desarrollo: carga perezosa para que jamás pese en producción.
-const DesignLab = lazy(() =>
-  import("./screens/DesignLab").then((m) => ({ default: m.DesignLab }))
+
+// Pantallas fuera del camino crítico (Hoy/Misión): carga diferida para
+// reducir el JavaScript inicial. El precache del service worker las deja
+// disponibles offline igualmente.
+const MissionComplete = lazy(() =>
+  import("./screens/MissionComplete").then((m) => ({ default: m.MissionComplete }))
 );
-const ArtDirections = lazy(() =>
-  import("./devart/ArtDirections").then((m) => ({ default: m.ArtDirections }))
+const Campaign = lazy(() =>
+  import("./screens/Campaign").then((m) => ({ default: m.Campaign }))
 );
+const Progress = lazy(() =>
+  import("./screens/Progress").then((m) => ({ default: m.Progress }))
+);
+const Codex = lazy(() => import("./screens/Codex").then((m) => ({ default: m.Codex })));
+const CodexDetail = lazy(() =>
+  import("./screens/CodexDetail").then((m) => ({ default: m.CodexDetail }))
+);
+const ProfileScreen = lazy(() =>
+  import("./screens/Profile").then((m) => ({ default: m.ProfileScreen }))
+);
+const History = lazy(() =>
+  import("./screens/History").then((m) => ({ default: m.History }))
+);
+const SessionDetail = lazy(() =>
+  import("./screens/History").then((m) => ({ default: m.SessionDetail }))
+);
+// Solo desarrollo: en producción ni siquiera se genera el chunk.
+const NullScreen = () => null;
+const DesignLab = import.meta.env.DEV
+  ? lazy(() => import("./screens/DesignLab").then((m) => ({ default: m.DesignLab })))
+  : NullScreen;
+const ArtDirections = import.meta.env.DEV
+  ? lazy(() => import("./devart/ArtDirections").then((m) => ({ default: m.ArtDirections })))
+  : NullScreen;
 
 function MotionPref() {
   const profile = useActiveProfile();
@@ -32,6 +53,18 @@ function MotionPref() {
     else if (prefs.animacionReducida === "completa") root.dataset.motion = "completa";
     else delete root.dataset.motion;
   }, [prefs]);
+  // Accesibilidad por perfil: tamaño de texto y alto contraste.
+  useEffect(() => {
+    const root = document.documentElement;
+    const acc = profile?.accessibility;
+    if (acc?.textSize && acc.textSize !== "normal") root.dataset.textsize = acc.textSize;
+    else delete root.dataset.textsize;
+    if (acc?.highContrast) root.dataset.contrast = "alto";
+    else delete root.dataset.contrast;
+    const theme = profile?.appearance?.theme;
+    if (theme && theme !== "tema-brasa") root.dataset.theme = theme;
+    else delete root.dataset.theme;
+  }, [profile]);
   return null;
 }
 
@@ -42,6 +75,8 @@ function ScrollReset() {
   }, [pathname]);
   return null;
 }
+
+const Fallback = () => <main className="screen" />;
 
 export function App() {
   const [ready, setReady] = useState(false);
@@ -102,37 +137,27 @@ export function App() {
       <div className="app-shell">
         <MotionPref />
         <ScrollReset />
-        <Routes>
-          <Route path="/" element={<Today />} />
-          <Route path="/mision" element={<Workout />} />
-          <Route path="/mision/resumen/:sessionId" element={<MissionComplete />} />
-          <Route path="/campana" element={<Campaign />} />
-          <Route path="/progreso" element={<Progress />} />
-          <Route path="/codice" element={<Codex />} />
-          <Route path="/codice/:exerciseId" element={<CodexDetail />} />
-          <Route path="/perfil" element={<ProfileScreen />} />
-          {import.meta.env.DEV && (
-            <Route
-              path="/dev/diseno"
-              element={
-                <Suspense fallback={<main className="screen" />}>
-                  <DesignLab />
-                </Suspense>
-              }
-            />
-          )}
-          {import.meta.env.DEV && (
-            <Route
-              path="/dev/art-directions"
-              element={
-                <Suspense fallback={<main className="screen" />}>
-                  <ArtDirections />
-                </Suspense>
-              }
-            />
-          )}
-          <Route path="*" element={<Today />} />
-        </Routes>
+        <Suspense fallback={<Fallback />}>
+          <Routes>
+            <Route path="/" element={<Today />} />
+            <Route path="/mision" element={<Workout />} />
+            <Route path="/mision/resumen/:sessionId" element={<MissionComplete />} />
+            <Route path="/campana" element={<Campaign />} />
+            <Route path="/progreso" element={<Progress />} />
+            <Route path="/historial" element={<History />} />
+            <Route path="/historial/:sessionId" element={<SessionDetail />} />
+            <Route path="/codice" element={<Codex />} />
+            <Route path="/codice/:exerciseId" element={<CodexDetail />} />
+            <Route path="/perfil" element={<ProfileScreen />} />
+            {import.meta.env.DEV && (
+              <Route path="/dev/diseno" element={<DesignLab />} />
+            )}
+            {import.meta.env.DEV && (
+              <Route path="/dev/art-directions" element={<ArtDirections />} />
+            )}
+            <Route path="*" element={<Today />} />
+          </Routes>
+        </Suspense>
         <NavBar />
         <UpdateToast />
       </div>

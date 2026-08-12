@@ -1,25 +1,42 @@
 // Motor de sugerencias conservador (doble progresión, ver manual §2).
-// Nunca modifica la prescripción: solo sugiere y el usuario decide.
+// Nunca modifica la prescripción ni aplica nada por su cuenta: SIEMPRE
+// explica el porqué y el usuario confirma cualquier cambio de carga.
+//
+// La molestia no es un veto eterno: entra como estado de incidencia
+// (activa / seguimiento / resuelta) evaluado contra la exposición más
+// reciente (ver incidents.ts).
 
 import type { ExercisePrescription } from "../data/types";
-import type { SetLog } from "../db/types";
+import type { SetLog, IncidentStatus } from "../db/types";
 
-export type SuggestionKind = "subir" | "mantener" | "bajar" | "sin-datos" | "molestia";
+export type SuggestionKind =
+  | "subir"
+  | "mantener"
+  | "bajar"
+  | "sin-datos"
+  | "molestia"
+  | "seguimiento";
 
 export interface Suggestion {
   kind: SuggestionKind;
   /** Peso sugerido para la primera serie, si procede */
   weightKg?: number;
+  /** Explicación SIEMPRE presente: por qué se sugiere lo que se sugiere. */
   motivo: string;
 }
 
 export interface ProgressionInput {
   prescription: ExercisePrescription;
-  /** Series de trabajo de la última sesión donde se hizo este ejercicio (mismo día de rutina). */
+  /**
+   * Series de trabajo de la última sesión donde se hizo este ejercicio CON LA
+   * MISMA VARIANTE (historiales de máquinas distintas no son comparables).
+   */
   lastSets: SetLog[];
-  /** Hubo molestia significativa (nivel >= 3) asociada al ejercicio la última vez. */
-  hadDiscomfort: boolean;
-  /** Incremento configurable en kg. */
+  /** Estado de incidencia del ejercicio (null = sin incidencias). */
+  incidentStatus?: IncidentStatus | null;
+  /** Explicación del estado de incidencia, si existe. */
+  incidentMotivo?: string | null;
+  /** Incremento configurable en kg (real del gimnasio si está configurado). */
   incrementKg: number;
 }
 
@@ -34,27 +51,42 @@ export const defaultIncrement = (
 export const suggest = ({
   prescription,
   lastSets,
-  hadDiscomfort,
+  incidentStatus,
+  incidentMotivo,
   incrementKg
 }: ProgressionInput): Suggestion => {
-  if (hadDiscomfort) {
+  // Incidencia activa: sin sugerencia de subida, con explicación honesta.
+  if (incidentStatus === "activa") {
     return {
       kind: "molestia",
       motivo:
-        "La última vez registraste molestia en este ejercicio. Sin sugerencia de subida: prioriza técnica y rango tolerable."
+        incidentMotivo ??
+        "Molestia reciente sin sesiones limpias posteriores: sin sugerencia de subida. Prioriza técnica y rango tolerable."
     };
   }
+
   const done = lastSets.filter((s) => !s.skipped && s.reps > 0);
   if (done.length === 0) {
     return {
       kind: "sin-datos",
       motivo:
-        "Sin registro previo. Elige una carga que permita la parte media del rango con RIR 2 real y técnica estable."
+        "Sin registro previo con esta variante. Elige una carga que permita la parte media del rango con RIR 2 real y técnica estable."
     };
   }
 
   const { repMax, repMin, rirPerSet, sets } = prescription;
   const lastWeight = done[done.length - 1].weightKg;
+
+  // En seguimiento: se mantiene aunque los números pidieran subir.
+  if (incidentStatus === "seguimiento") {
+    return {
+      kind: "seguimiento",
+      weightKg: lastWeight,
+      motivo:
+        incidentMotivo ??
+        "Molestia en seguimiento: mantén la carga esta sesión; si sigue limpia, las subidas vuelven."
+    };
+  }
 
   // ¿Todas las series prescritas al máximo del rango con el RIR objetivo (o más margen)?
   const allTop =
@@ -67,7 +99,7 @@ export const suggest = ({
     return {
       kind: "subir",
       weightKg: round25(lastWeight + incrementKg),
-      motivo: `Todas las series llegaron a ${repMax} repeticiones con el RIR previsto. Sube ${incrementKg} kg y vuelve a la parte baja del rango.`
+      motivo: `Todas las series llegaron a ${repMax} repeticiones con el RIR previsto. Sube ${incrementKg} kg y vuelve a la parte baja del rango. Confírmalo tú: la app nunca cambia la carga sola.`
     };
   }
 

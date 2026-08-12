@@ -28,7 +28,6 @@ describe("motor de progresión (doble progresión conservadora)", () => {
     const s = suggest({
       prescription: press,
       lastSets: [],
-      hadDiscomfort: false,
       incrementKg: 2.5
     });
     expect(s.kind).toBe("sin-datos");
@@ -42,7 +41,6 @@ describe("motor de progresión (doble progresión conservadora)", () => {
     const s = suggest({
       prescription: press,
       lastSets: sets,
-      hadDiscomfort: false,
       incrementKg: 2.5
     });
     expect(s.kind).toBe("subir");
@@ -56,7 +54,6 @@ describe("motor de progresión (doble progresión conservadora)", () => {
     const s = suggest({
       prescription: press,
       lastSets: sets,
-      hadDiscomfort: false,
       incrementKg: 2.5
     });
     expect(s.kind).toBe("mantener");
@@ -70,7 +67,6 @@ describe("motor de progresión (doble progresión conservadora)", () => {
     const s = suggest({
       prescription: press,
       lastSets: sets,
-      hadDiscomfort: false,
       incrementKg: 2.5
     });
     expect(s.kind).toBe("bajar");
@@ -84,7 +80,6 @@ describe("motor de progresión (doble progresión conservadora)", () => {
     const s = suggest({
       prescription: press,
       lastSets: sets,
-      hadDiscomfort: false,
       incrementKg: 2.5
     });
     expect(s.kind).not.toBe("subir");
@@ -95,24 +90,52 @@ describe("motor de progresión (doble progresión conservadora)", () => {
     const s = suggest({
       prescription: press,
       lastSets: sets,
-      hadDiscomfort: false,
       incrementKg: 2.5
     });
     expect(s.kind).not.toBe("subir");
   });
 
-  it("molestia significativa: desactiva la sugerencia de progresión", () => {
+  it("incidencia ACTIVA: desactiva la sugerencia de subida y lo explica", () => {
     const sets = [2, 2, 1, 1].map((rir, i) =>
       makeSet({ setNumber: i + 1, reps: 10, rir })
     );
     const s = suggest({
       prescription: press,
       lastSets: sets,
-      hadDiscomfort: true,
+      incidentStatus: "activa",
       incrementKg: 2.5
     });
     expect(s.kind).toBe("molestia");
     expect(s.weightKg).toBeUndefined();
+    expect(s.motivo.length).toBeGreaterThan(10);
+  });
+
+  it("incidencia EN SEGUIMIENTO: mantiene la carga aunque los números pidan subir", () => {
+    const sets = [2, 2, 1, 1].map((rir, i) =>
+      makeSet({ setNumber: i + 1, reps: 10, rir, weightKg: 60 })
+    );
+    const s = suggest({
+      prescription: press,
+      lastSets: sets,
+      incidentStatus: "seguimiento",
+      incrementKg: 2.5
+    });
+    expect(s.kind).toBe("seguimiento");
+    expect(s.weightKg).toBe(60);
+  });
+
+  it("incidencia RESUELTA: las sugerencias vuelven con normalidad", () => {
+    const sets = [2, 2, 1, 1].map((rir, i) =>
+      makeSet({ setNumber: i + 1, reps: 10, rir, weightKg: 60 })
+    );
+    const s = suggest({
+      prescription: press,
+      lastSets: sets,
+      incidentStatus: "resuelta",
+      incrementKg: 2.5
+    });
+    expect(s.kind).toBe("subir");
+    expect(s.weightKg).toBe(62.5);
   });
 
   it("las series omitidas no cuentan como evidencia", () => {
@@ -123,7 +146,6 @@ describe("motor de progresión (doble progresión conservadora)", () => {
     const s = suggest({
       prescription: press,
       lastSets: sets,
-      hadDiscomfort: false,
       incrementKg: 2.5
     });
     expect(s.kind).toBe("sin-datos");

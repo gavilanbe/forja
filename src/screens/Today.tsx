@@ -37,6 +37,8 @@ import {
 } from "../logic/dates";
 import { flameStreak, summarizeWeeks } from "../logic/streak";
 import { campaignPhase, flameStateOf, summarizeBlock } from "../logic/campaign";
+import { getActiveCampaign } from "../logic/campaigns";
+import { effectiveWeekFor } from "../logic/calendar";
 import { levelFromXp } from "../logic/xp";
 import { syncUiState } from "../sync/adapter";
 import type { Session } from "../db/types";
@@ -62,19 +64,38 @@ export function Today() {
         : [],
     [profile?.id]
   );
+  const campaign = useLiveQuery(
+    async () => (profile ? await getActiveCampaign(profile.id) : undefined),
+    [profile?.id]
+  );
+  const effWeek = useLiveQuery(
+    async () => (profile ? await effectiveWeekFor(profile, today) : undefined),
+    [profile?.id, dateKeyOf(today)]
+  );
 
-  if (!profile || sessions === undefined) return <main className="screen" />;
+  if (!profile || sessions === undefined || effWeek === undefined) {
+    return <main className="screen" />;
+  }
 
   const schedule = scheduleById(profile.scheduleId);
+  void schedule;
   const level = levelFromXp(profile.xp);
   const phase = campaignPhase(profile.campaignStart, today);
-  const scheduled = sessions.filter((s) => !s.unscheduled);
+  // Solo la campaña ACTIVA alimenta llama, camino y capítulos: las campañas
+  // archivadas conservan su historial sin mezclarse.
+  const scheduled = sessions.filter(
+    (s) => !s.unscheduled && (!campaign || s.campaignId === campaign.id)
+  );
   const weeks = summarizeWeeks(
     scheduled,
     profile.campaignStart,
     profile.weeklyTarget,
     today,
-    CAMPAIGN_WEEKS
+    CAMPAIGN_WEEKS,
+    {
+      joinedKey: campaign?.joinedKey,
+      scheduleWeek: effWeek.days.map((d) => d.dayId)
+    }
   );
   const streak = flameStreak(weeks, today, profile.campaignStart);
   const flame = flameStateOf(phase, weeks, streak);
@@ -84,7 +105,8 @@ export function Today() {
 
   const todayKey = dateKeyOf(today);
   const todayIdx = weekdayIndex(today);
-  const todayDayId = schedule.week[todayIdx];
+  const todayInfo = effWeek.days[todayIdx];
+  const todayDayId = todayInfo?.absent ? null : todayInfo?.dayId ?? null;
   const todayDay = todayDayId ? dayById(todayDayId) : undefined;
 
   const activeSession = sessions.find((s) => s.status === "activa");
@@ -247,8 +269,15 @@ export function Today() {
                 : `objetivo ${profile.weeklyTarget}/semana`}
             </span>
           </div>
+          {effWeek.deload && (
+            <p className="small dim" role="status">
+              Semana de descarga: volumen planificado al{" "}
+              {Math.round(effWeek.deloadFactor * 100)} %. Se registra lo real,
+              sin fingir la prescripción completa.
+            </p>
+          )}
           <div className="path" role="list">
-            {schedule.week.map((dayId, i) => {
+            {effWeek.days.map(({ dayId, absent, absenceReason, movedFrom }, i) => {
               const date = addDays(monday, i);
               const key = dateKeyOf(date);
               const isToday = key === todayKey;
@@ -260,8 +289,10 @@ export function Today() {
               const isPast = key < todayKey;
               const missed =
                 dayId &&
+                !absent &&
                 isPast &&
                 key >= profile.campaignStart &&
+                key >= (campaign?.joinedKey ?? profile.campaignStart) &&
                 phase.kind !== "prologo" &&
                 !done &&
                 !adapted;
@@ -269,7 +300,11 @@ export function Today() {
               let nodeCls = "path__node";
               let glyph: React.ReactNode;
               let desc = "";
-              if (!dayId) {
+              if (absent) {
+                nodeCls += " path__node--camp";
+                glyph = <PxSprite frames={[G_CAMP]} palette={PAL_C} scale={2} />;
+                desc = `Ausencia: ${absenceReason ?? "día no exigible"}`;
+              } else if (!dayId) {
                 nodeCls += " path__node--camp";
                 glyph = <PxSprite frames={[G_CAMP]} palette={PAL_C} scale={2} />;
                 desc = "Campamento";
@@ -304,7 +339,11 @@ export function Today() {
                     <span className="visually-hidden">{desc}</span>
                   </span>
                   <span className="path__daytype" aria-hidden="true">
-                    {dayId ? dayById(dayId)?.name : "—"}
+                    {absent
+                      ? "Ausencia"
+                      : dayId
+                        ? `${dayById(dayId)?.name}${movedFrom !== undefined ? " ↷" : ""}`
+                        : "—"}
                   </span>
                 </div>
               );

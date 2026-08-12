@@ -1,10 +1,13 @@
-// Ficha de ejercicio: contenido íntegro del manual + rendimiento reciente.
+// Ficha de ejercicio: contenido íntegro del manual + rendimiento reciente,
+// favoritos, nota personal y variantes con su propio historial.
 
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "../db/db";
+import { db, now, touch } from "../db/db";
 import { codexById } from "../data/codex";
 import { DAYS } from "../data/routine";
+import { variantById, variantsOf } from "../data/variants";
 import { useActiveProfile } from "../ui/hooks";
 import { PixelButton, PixelFrame } from "../ui/Pixel";
 
@@ -27,6 +30,39 @@ export function CodexDetail() {
         : [],
     [profile?.id, exerciseId]
   );
+  const codexPref = useLiveQuery(
+    async () =>
+      profile && exerciseId
+        ? await db.codexPrefs.get(`codex:${profile.id}:${exerciseId}`)
+        : undefined,
+    [profile?.id, exerciseId]
+  );
+  const [noteDraft, setNoteDraft] = useState("");
+  useEffect(() => {
+    setNoteDraft(codexPref?.personalNote ?? "");
+  }, [codexPref?.personalNote]);
+
+  const savePref = async (patch: { favorite?: boolean; personalNote?: string }) => {
+    if (!profile || !exerciseId) return;
+    const id = `codex:${profile.id}:${exerciseId}`;
+    const existing = await db.codexPrefs.get(id);
+    const t = now();
+    await db.codexPrefs.put(
+      existing
+        ? touch({ ...existing, ...patch })
+        : {
+            id,
+            createdAt: t,
+            updatedAt: t,
+            localVersion: 1,
+            syncStatus: "local",
+            profileId: profile.id,
+            exerciseId,
+            favorite: false,
+            ...patch
+          }
+    );
+  };
 
   if (!codex) {
     return (
@@ -52,7 +88,18 @@ export function CodexDetail() {
       <Link to="/codice" className="px-label" style={{ display: "inline-block", marginBottom: 12 }}>
         ‹ Códice
       </Link>
-      <h1 className="wk-exname">{codex.nombre}</h1>
+      <div className="row" style={{ alignItems: "flex-start" }}>
+        <h1 className="wk-exname grow">{codex.nombre}</h1>
+        <button
+          type="button"
+          className={`fav-btn${codexPref?.favorite ? " fav-btn--on" : ""}`}
+          aria-pressed={codexPref?.favorite ?? false}
+          aria-label={codexPref?.favorite ? "Quitar de favoritos" : "Añadir a favoritos"}
+          onClick={() => savePref({ favorite: !(codexPref?.favorite ?? false) })}
+        >
+          ★
+        </button>
+      </div>
       <p className="small dim" style={{ marginBottom: 8 }}>
         {codex.musculos}
       </p>
@@ -106,6 +153,19 @@ export function CodexDetail() {
           </div>
         </PixelFrame>
 
+        {variantsOf(codex.id).length > 0 && (
+          <PixelFrame tight as="section">
+            <div className="codex-section codex-section--alt">
+              <h3>Variantes con historial propio</h3>
+              <ul>
+                {variantsOf(codex.id).map((v) => (
+                  <li key={v.id}>{v.nombre}</li>
+                ))}
+              </ul>
+            </div>
+          </PixelFrame>
+        )}
+
         <PixelFrame tight as="section">
           <div className="codex-section">
             <h3>Rendimiento reciente</h3>
@@ -114,12 +174,37 @@ export function CodexDetail() {
                 {recent.map((s) => (
                   <span key={s.id} className="wk-prev__set">
                     {s.weightKg} kg × {s.reps} @ RIR {s.rir}
+                    {s.variantId
+                      ? ` · ${variantById(s.variantId)?.nombre ?? "variante"}`
+                      : ""}
                   </span>
                 ))}
               </div>
             ) : (
               <p className="small dim">Todavía sin registros en la campaña.</p>
             )}
+          </div>
+        </PixelFrame>
+
+        <PixelFrame tight as="section">
+          <div className="codex-section">
+            <h3>Nota personal</h3>
+            <textarea
+              className="note-input"
+              maxLength={300}
+              rows={3}
+              value={noteDraft}
+              onChange={(e) => setNoteDraft(e.target.value)}
+              placeholder="Ajustes de máquina, sensaciones, recordatorios…"
+              aria-label={`Nota personal de ${codex.nombre}`}
+            />
+            <PixelButton
+              tone="gold"
+              block
+              onClick={() => savePref({ personalNote: noteDraft })}
+            >
+              Guardar nota
+            </PixelButton>
           </div>
         </PixelFrame>
       </div>

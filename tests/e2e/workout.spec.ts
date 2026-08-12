@@ -103,7 +103,11 @@ test("técnica y alternativa por máquina ocupada", async ({ page, context }) =>
   await page
     .getByRole("button", { name: /Press inclinado en Smith/ })
     .click();
-  await expect(page.getByText(/Alternativa:/)).toBeVisible();
+  // La variante toma el mando: título propio e historial independiente.
+  await expect(page.getByText(/Variante de Press inclinado/)).toBeVisible();
+  await expect(
+    page.getByText(/Primera vez con esta variante/)
+  ).toBeVisible();
   await logSet(page, "35");
   await expect(page.getByRole("timer")).toBeVisible();
 });

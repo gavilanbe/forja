@@ -98,6 +98,8 @@ export function MissionComplete() {
   const level = levelFromXp(profile.xp);
   const syncState = syncUiState(pending, errors);
   const adapted = session.status === "adaptada";
+  const partial = session.status === "parcial";
+  const abandoned = session.status === "abandonada";
   const extra = !!session.unscheduled;
   const schedule = scheduleById(profile.scheduleId);
   const weekCount = weekSessions.length;
@@ -126,14 +128,30 @@ export function MissionComplete() {
           role="status"
         >
           <PxSprite
-            frames={[adapted ? SEAL_ADAPT_C : SEAL_DONE_C]}
+            frames={[adapted || partial || abandoned ? SEAL_ADAPT_C : SEAL_DONE_C]}
             palette={PAL_C}
             scale={3}
-            label={adapted ? "Sello de misión adaptada" : "Sello de misión completada"}
+            label={
+              adapted
+                ? "Sello de misión adaptada"
+                : partial
+                  ? "Sello de misión parcial"
+                  : abandoned
+                    ? "Misión abandonada"
+                    : "Sello de misión completada"
+            }
           />
           <div>
             <span className="px-label px-label--gold">
-              {extra ? "Misión extra" : adapted ? "Misión adaptada" : "Misión completada"}
+              {extra
+                ? "Misión extra"
+                : adapted
+                  ? "Misión adaptada"
+                  : partial
+                    ? "Misión parcial"
+                    : abandoned
+                      ? "Misión abandonada"
+                      : "Misión completada"}
             </span>
             <h1 className="complete__title">{day?.name}</h1>
           </div>
@@ -144,6 +162,19 @@ export function MissionComplete() {
             <p className="complete__note">
               Adaptar con cabeza también forja: la constancia vale más que
               cumplir el papel a cualquier precio.
+            </p>
+          )}
+          {partial && !extra && (
+            <p className="complete__note">
+              Sesión parcial: el trabajo hecho cuenta ({s?.workingSets ?? 0} de{" "}
+              {s?.prescribedSets ?? 0} series), pero la misión completa pide
+              todas las series prescritas — o sus omisiones explicadas.
+            </p>
+          )}
+          {abandoned && (
+            <p className="complete__note">
+              Misión abandonada: sin recompensa de misión. Las series ya
+              guardadas se conservan y no se pueden cultivar repitiendo el día.
             </p>
           )}
           {extra && (

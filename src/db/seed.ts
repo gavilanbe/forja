@@ -6,7 +6,7 @@ import type { Prefs, Profile } from "./types";
 import { addDays, dateKeyOf, mondayOf, weekdayIndex } from "../logic/dates";
 import { forjaNow } from "../logic/clock";
 import { KV_ACTIVE_PROFILE } from "../logic/session";
-import { ROUTINE_VERSION } from "../data/routine";
+import { CAMPAIGN_WEEKS, ROUTINE_VERSION } from "../data/routine";
 import { SCHEMA_VERSION } from "./db";
 
 export const PROFILE_NAHUEL = "perfil-nahuel";
@@ -55,11 +55,26 @@ export const ensureSeed = async (today = forjaNow()): Promise<void> => {
 
   // La comprobación vive DENTRO de la transacción: dos llamadas concurrentes
   // (p. ej. StrictMode) no pueden sembrar dos veces.
-  await db.transaction("rw", [db.profiles, db.prefs, db.kv], async () => {
+  await db.transaction("rw", [db.profiles, db.prefs, db.kv, db.campaigns], async () => {
     const count = await db.profiles.count();
     if (count > 0) return;
     await db.profiles.bulkAdd([nahuel, carlos]);
     await db.prefs.bulkAdd([prefsFor(PROFILE_NAHUEL), prefsFor(PROFILE_CARLOS)]);
+    // Cada perfil nace con su campaña activa como entidad propia.
+    await db.campaigns.bulkAdd(
+      [nahuel, carlos].map((p) => ({
+        ...stamp(),
+        id: `campana-${p.id}-1`,
+        profileId: p.id,
+        startKey: campaignStart,
+        joinedKey: dateKeyOf(today),
+        routineVersion: ROUTINE_VERSION,
+        scheduleId: p.scheduleId,
+        weeklyTarget: p.weeklyTarget,
+        weeksTotal: CAMPAIGN_WEEKS,
+        status: "activa" as const
+      }))
+    );
     await db.kv.bulkPut([
       { key: KV_ACTIVE_PROFILE, value: PROFILE_NAHUEL },
       { key: "schemaVersion", value: SCHEMA_VERSION },

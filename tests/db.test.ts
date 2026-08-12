@@ -128,7 +128,7 @@ describe("misión local-first", () => {
 });
 
 describe("completar misión", () => {
-  it("sella la sesión con resumen y XP de misión", async () => {
+  it("sella la sesión con resumen; una sola serie ya no es «completada»", async () => {
     const profile = (await getActiveProfile())!;
     const session = await startSession(profile, torsoA.id, MONDAY);
     await logSet(session, press, {
@@ -139,9 +139,9 @@ describe("completar misión", () => {
       exerciseId: press.exerciseId
     });
     const result = await completeSession(session, profile, false);
-    expect(result.session.status).toBe("completada");
+    expect(result.session.status).toBe("parcial");
     expect(result.workingSets).toBe(1);
-    expect(result.xpGained).toBe(60); // misión, sin hitos ni capítulo
+    expect(result.xpGained).toBe(25); // misión parcial, sin hitos ni capítulo
     expect(result.session.summary?.avgRir).toBe(2);
   });
 
@@ -170,7 +170,7 @@ describe("completar misión", () => {
       setNumber: 1,
       exerciseId: press.exerciseId
     });
-    await completeSession(s1, profile, false);
+    await completeSession(s1, profile, true); // adaptada: los hitos puntúan
 
     const jueves = new Date(2026, 7, 6);
     const s2 = await startSession(profile, torsoA.id, jueves);
@@ -181,7 +181,7 @@ describe("completar misión", () => {
       setNumber: 1,
       exerciseId: press.exerciseId
     });
-    const result = await completeSession(s2, profile, false);
+    const result = await completeSession(s2, profile, true);
     expect(result.exercisesProgressed).toBe(1);
     expect(result.hitos).toHaveLength(1);
     expect(result.hitos[0]).toContain("62.5 kg");
@@ -201,7 +201,7 @@ describe("completar misión", () => {
       setNumber: 1,
       exerciseId: press.exerciseId
     });
-    const r1 = await completeSession(s1, p, false);
+    const r1 = await completeSession(s1, p, true); // adaptada cumple el plan
     expect(r1.weekMet).toBe(true);
     expect(r1.xpGained).toBe(60 + 150);
 
@@ -214,7 +214,7 @@ describe("completar misión", () => {
       setNumber: 1,
       exerciseId: DAYS[1].entries[0].exerciseId
     });
-    const r2 = await completeSession(s2, p, false);
+    const r2 = await completeSession(s2, p, true);
     expect(r2.xpGained).toBe(60); // sin segundo bono de capítulo
   });
 });
@@ -230,10 +230,10 @@ describe("persistencia y temporizador", () => {
       targetEndAt: Date.now() + 180_000,
       pausedRemainingMs: null
     };
-    await saveTimer(t);
+    await saveTimer(PROFILE_NAHUEL, t);
     db.close();
     await db.open();
-    const loaded = await loadTimer();
+    const loaded = await loadTimer(PROFILE_NAHUEL);
     expect(loaded?.targetEndAt).toBe(t.targetEndAt);
   });
 

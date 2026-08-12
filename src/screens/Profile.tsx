@@ -1,7 +1,8 @@
-// Perfil y datos: cambio de forjador, preferencias, instalación PWA,
-// exportación e importación de la base local y versiones.
+// Perfil: forjadores, apariencia y cosméticos, preferencias (incluida
+// accesibilidad), MI GIMNASIO, editor de rutina, calendario semanal, fecha
+// de campaña, instalación PWA y datos/copias de seguridad.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, SCHEMA_VERSION, touch } from "../db/db";
 import { setActiveProfile } from "../db/seed";
@@ -12,19 +13,53 @@ import { PAL_C } from "../ui/arcade/palette";
 import { avatarFrames } from "../ui/arcade/extra";
 import { ROUTINE_VERSION } from "../data/routine";
 import { levelFromXp } from "../logic/xp";
-import {
-  exportBackup,
-  importBackup,
-  validateBackup,
-  type BackupFile,
-  type ValidationResult
-} from "../logic/backup";
-import { syncAdapter, syncUiState } from "../sync/adapter";
+import { syncUiState } from "../sync/adapter";
+import { changeCampaignStart, getActiveCampaign } from "../logic/campaigns";
+import { requestNotificationPermission } from "../logic/rest";
+import { dateKeyOf, formatDateShort, mondayOf, parseDateKey } from "../logic/dates";
+import { GymSection } from "./profile/GymSection";
+import { RoutineEditor } from "./profile/RoutineEditor";
+import { CalendarSection } from "./profile/CalendarSection";
+import { CosmeticsSection } from "./profile/CosmeticsSection";
+import { DataSection } from "./profile/DataSection";
 
-const APP_VERSION = "2.0.0";
+const APP_VERSION = "3.0.0";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
+}
+
+/** El evento se captura GLOBALMENTE al cargar el módulo: aunque el usuario
+ *  no haya visitado Perfil todavía, la oferta de instalación no se pierde. */
+let capturedInstallEvt: BeforeInstallPromptEvent | null = null;
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    capturedInstallEvt = e as BeforeInstallPromptEvent;
+  });
+}
+
+function Toggle({
+  on,
+  label,
+  onToggle
+}: {
+  on: boolean;
+  label: string;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`toggle${on ? " toggle--on" : ""}`}
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      onClick={onToggle}
+    >
+      <span className="toggle__state">{on ? "ACTIVADO" : "DESACTIVADO"}</span>
+    </button>
+  );
 }
 
 export function ProfileScreen() {
@@ -33,13 +68,16 @@ export function ProfileScreen() {
   const online = useOnline();
   const { pending, errors } = usePendingSync();
   const profiles = useLiveQuery(async () => await db.profiles.toArray(), []);
-  const fileRef = useRef<HTMLInputElement>(null);
 
-  const [installEvt, setInstallEvt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installEvt, setInstallEvt] = useState<BeforeInstallPromptEvent | null>(
+    capturedInstallEvt
+  );
   const [installOpen, setInstallOpen] = useState(false);
   const [switchTarget, setSwitchTarget] = useState<{ id: string; name: string } | null>(
     null
   );
+  const [dateNote, setDateNote] = useState<string | null>(null);
+
   const activeSession = useLiveQuery(
     async () =>
       profile
@@ -50,18 +88,26 @@ export function ProfileScreen() {
         : undefined,
     [profile?.id]
   );
-  const [importState, setImportState] = useState<
-    | null
-    | { kind: "confirm"; backup: BackupFile; validation: ValidationResult }
-    | { kind: "error"; message: string }
-    | { kind: "done" }
-  >(null);
-  const [exportNote, setExportNote] = useState(false);
+  const campaign = useLiveQuery(
+    async () => (profile ? await getActiveCampaign(profile.id) : undefined),
+    [profile?.id]
+  );
+  const campaignSessionCount = useLiveQuery(
+    async () =>
+      profile && campaign
+        ? await db.sessions
+            .where("[profileId+campaignId]")
+            .equals([profile.id, campaign.id])
+            .count()
+        : 0,
+    [profile?.id, campaign?.id]
+  );
 
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault();
-      setInstallEvt(e as BeforeInstallPromptEvent);
+      capturedInstallEvt = e as BeforeInstallPromptEvent;
+      setInstallEvt(capturedInstallEvt);
     };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
@@ -79,39 +125,25 @@ export function ProfileScreen() {
   const setPref = async (patch: Partial<typeof prefs>) => {
     await db.prefs.put(touch({ ...prefs, ...patch }));
   };
-
-  const doExport = async () => {
-    const backup = await exportBackup();
-    const blob = new Blob([JSON.stringify(backup, null, 2)], {
-      type: "application/json"
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `forja-copia-${backup.exportedAt.slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setExportNote(true);
-    setTimeout(() => setExportNote(false), 4000);
+  const setAccessibility = async (
+    patch: Partial<NonNullable<typeof profile.accessibility>>
+  ) => {
+    const fresh = await db.profiles.get(profile.id);
+    if (!fresh) return;
+    await db.profiles.put(
+      touch({
+        ...fresh,
+        accessibility: {
+          textSize: "normal",
+          highContrast: false,
+          ...fresh.accessibility,
+          ...patch
+        }
+      })
+    );
   };
 
-  const onImportFile = async (file: File) => {
-    try {
-      const text = await file.text();
-      const raw: unknown = JSON.parse(text);
-      const validation = validateBackup(raw);
-      if (!validation.ok) {
-        setImportState({ kind: "error", message: validation.error! });
-        return;
-      }
-      setImportState({ kind: "confirm", backup: raw as BackupFile, validation });
-    } catch {
-      setImportState({
-        kind: "error",
-        message: "No se pudo leer el archivo: no es un JSON válido."
-      });
-    }
-  };
+  const canChangeStart = (campaignSessionCount ?? 0) === 0;
 
   return (
     <main className="screen">
@@ -136,8 +168,6 @@ export function ProfileScreen() {
                   aria-pressed={p.id === profile.id}
                   onClick={() => {
                     if (p.id === profile.id) return;
-                    // Con misión activa, el cambio pide confirmación: evita
-                    // saltar de forjador por un toque accidental.
                     if (activeSession) setSwitchTarget({ id: p.id, name: p.name });
                     else void setActiveProfile(p.id);
                   }}
@@ -158,11 +188,69 @@ export function ProfileScreen() {
             })}
           </div>
           <p className="small dim" style={{ marginTop: 12 }}>
-            {profile.name === "Carlos"
+            {profile.avatarId === "carlos"
               ? "Carlos entrena Torso A, Pierna A y Tirón junto a Nahuel, sin compensaciones. Si un día extra es posible, se une a Empuje o Pierna B."
               : `Objetivo de ${profile.name}: ${profile.weeklyTarget} misiones por semana. Nv. ${level.level}, ${level.titulo}.`}
           </p>
         </PixelFrame>
+
+        {/* Apariencia y cosméticos */}
+        <CosmeticsSection profile={profile} />
+
+        {/* Fecha de inicio de campaña (editable sin sesiones) */}
+        {campaign && (
+          <PixelFrame as="section">
+            <div className="field-label">
+              <span>Campaña actual</span>
+              <span className="field-label__hint">
+                desde {formatDateShort(parseDateKey(campaign.startKey))}
+              </span>
+            </div>
+            {canChangeStart ? (
+              <div className="stack stack--tight">
+                <p className="small dim">
+                  Aún sin sesiones registradas: puedes cambiar el inicio.
+                </p>
+                <input
+                  type="date"
+                  className="date-input"
+                  aria-label="Nueva fecha de inicio de campaña"
+                  onChange={async (e) => {
+                    if (!e.target.value) return;
+                    const monday = dateKeyOf(mondayOf(parseDateKey(e.target.value)));
+                    const res = await changeCampaignStart(
+                      profile.id,
+                      monday,
+                      e.target.value
+                    );
+                    setDateNote(
+                      res.ok
+                        ? `Inicio movido al ${monday} (incorporación ${e.target.value}).`
+                        : res.error ?? null
+                    );
+                  }}
+                />
+                {dateNote && (
+                  <p className="small" role="status">{dateNote}</p>
+                )}
+              </div>
+            ) : (
+              <p className="small dim">
+                Con sesiones ya registradas, la fecha de inicio queda fijada.
+                Desde el mapa de Campaña puedes archivarla y forjar una nueva.
+              </p>
+            )}
+          </PixelFrame>
+        )}
+
+        {/* Calendario semanal */}
+        <CalendarSection profile={profile} />
+
+        {/* Editor de rutina */}
+        <RoutineEditor profile={profile} />
+
+        {/* MI GIMNASIO */}
+        <GymSection profile={profile} />
 
         {/* Preferencias */}
         <PixelFrame as="section">
@@ -174,13 +262,10 @@ export function ProfileScreen() {
               <div className="pref-row__label">Sonido del temporizador</div>
               <div className="pref-row__hint">Pitido breve al terminar el descanso</div>
             </div>
-            <button
-              type="button"
-              className={`toggle${prefs.sonido ? " toggle--on" : ""}`}
-              role="switch"
-              aria-checked={prefs.sonido}
-              aria-label="Sonido del temporizador"
-              onClick={() => setPref({ sonido: !prefs.sonido })}
+            <Toggle
+              on={prefs.sonido}
+              label="Sonido del temporizador"
+              onToggle={() => setPref({ sonido: !prefs.sonido })}
             />
           </div>
           <div className="pref-row">
@@ -188,13 +273,50 @@ export function ProfileScreen() {
               <div className="pref-row__label">Vibración</div>
               <div className="pref-row__hint">Aviso háptico al guardar y al acabar descansos</div>
             </div>
-            <button
-              type="button"
-              className={`toggle${prefs.vibracion ? " toggle--on" : ""}`}
-              role="switch"
-              aria-checked={prefs.vibracion}
-              aria-label="Vibración"
-              onClick={() => setPref({ vibracion: !prefs.vibracion })}
+            <Toggle
+              on={prefs.vibracion}
+              label="Vibración"
+              onToggle={() => setPref({ vibracion: !prefs.vibracion })}
+            />
+          </div>
+          <div className="pref-row">
+            <div>
+              <div className="pref-row__label">Pantalla encendida en descansos</div>
+              <div className="pref-row__hint">Wake Lock, si el dispositivo lo permite</div>
+            </div>
+            <Toggle
+              on={prefs.wakeLock ?? false}
+              label="Pantalla encendida en descansos"
+              onToggle={() => setPref({ wakeLock: !prefs.wakeLock })}
+            />
+          </div>
+          <div className="pref-row">
+            <div>
+              <div className="pref-row__label">Notificación de fin de descanso</div>
+              <div className="pref-row__hint">Requiere permiso del navegador</div>
+            </div>
+            <Toggle
+              on={prefs.notificacionDescanso ?? false}
+              label="Notificación de fin de descanso"
+              onToggle={async () => {
+                if (!prefs.notificacionDescanso) {
+                  const ok = await requestNotificationPermission();
+                  await setPref({ notificacionDescanso: ok });
+                } else {
+                  await setPref({ notificacionDescanso: false });
+                }
+              }}
+            />
+          </div>
+          <div className="pref-row">
+            <div>
+              <div className="pref-row__label">Modo compacto en el gimnasio</div>
+              <div className="pref-row__hint">Menos texto, controles más directos</div>
+            </div>
+            <Toggle
+              on={prefs.modoCompacto ?? false}
+              label="Modo compacto en el gimnasio"
+              onToggle={() => setPref({ modoCompacto: !prefs.modoCompacto })}
             />
           </div>
           <div className="pref-row">
@@ -218,6 +340,42 @@ export function ProfileScreen() {
                 <option value="completa">Completas</option>
               </select>
             </div>
+          </div>
+          <div className="pref-row">
+            <div>
+              <div className="pref-row__label">Tamaño de texto</div>
+              <div className="pref-row__hint">Explicaciones y controles</div>
+            </div>
+            <div className="select-frame" style={{ minWidth: 130 }}>
+              <select
+                aria-label="Tamaño de texto"
+                value={profile.accessibility?.textSize ?? "normal"}
+                onChange={(e) =>
+                  setAccessibility({
+                    textSize: e.target.value as "normal" | "grande" | "enorme"
+                  })
+                }
+              >
+                <option value="normal">Normal</option>
+                <option value="grande">Grande</option>
+                <option value="enorme">Enorme</option>
+              </select>
+            </div>
+          </div>
+          <div className="pref-row">
+            <div>
+              <div className="pref-row__label">Alto contraste</div>
+              <div className="pref-row__hint">Refuerza textos y bordes</div>
+            </div>
+            <Toggle
+              on={profile.accessibility?.highContrast ?? false}
+              label="Alto contraste"
+              onToggle={() =>
+                setAccessibility({
+                  highContrast: !(profile.accessibility?.highContrast ?? false)
+                })
+              }
+            />
           </div>
           <div className="pref-row">
             <div>
@@ -257,6 +415,10 @@ export function ProfileScreen() {
               </select>
             </div>
           </div>
+          <p className="small dim" style={{ marginTop: 8 }}>
+            MI GIMNASIO puede fijar un incremento distinto por máquina; ese
+            manda sobre estos valores.
+          </p>
         </PixelFrame>
 
         {/* Instalación */}
@@ -287,65 +449,14 @@ export function ProfileScreen() {
           )}
         </PixelFrame>
 
-        {/* Datos */}
-        <PixelFrame as="section">
-          <div className="field-label">
-            <span>Datos</span>
-          </div>
-          <div className="stack stack--tight">
-            <div className="row">
-              <StatusChip
-                tone={
-                  syncState.kind === "local" || syncState.kind === "sincronizado"
-                    ? "done"
-                    : syncState.kind === "pendiente"
-                      ? "warn"
-                      : "danger"
-                }
-                dot
-                role="status"
-              >
-                {syncState.kind === "local" && "Modo: solo este dispositivo"}
-                {syncState.kind === "sincronizado" && "Sincronizado"}
-                {syncState.kind === "pendiente" &&
-                  `${syncState.count} operaciones en cola — datos a salvo`}
-                {syncState.kind === "error" &&
-                  `${syncState.count} operaciones reintentándose — datos a salvo`}
-              </StatusChip>
-            </div>
-            <p className="data-note">
-              Todos los registros viven en la base local (IndexedDB). Adaptador
-              de sincronización: {syncAdapter.name}.
-              {!online && " Ahora mismo no hay conexión y no hace ninguna falta."}
-            </p>
-            <PixelButton tone="gold" block onClick={doExport}>
-              Exportar datos a JSON
-            </PixelButton>
-            {exportNote && (
-              <p className="small" style={{ color: "var(--done)" }} role="status">
-                Copia exportada. Guárdala donde no se pierda.
-              </p>
-            )}
-            <PixelButton tone="ghost" block onClick={() => fileRef.current?.click()}>
-              Importar una copia
-            </PixelButton>
-            <input
-              ref={fileRef}
-              className="file-input"
-              type="file"
-              accept="application/json,.json"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void onImportFile(f);
-                e.target.value = "";
-              }}
-            />
-            <p className="data-note">
-              Base de datos v{SCHEMA_VERSION} · Rutina v{ROUTINE_VERSION} · App v
-              {APP_VERSION}
-            </p>
-          </div>
-        </PixelFrame>
+        {/* Datos y copias */}
+        <DataSection profile={profile} prefs={prefs} online={online} />
+
+        <p className="data-note">
+          Base de datos v{SCHEMA_VERSION} · Rutina v{ROUTINE_VERSION} · App v
+          {APP_VERSION} ·{" "}
+          {syncState.kind === "local" ? "solo este dispositivo" : syncState.kind}
+        </p>
       </div>
 
       {/* Confirmación de cambio con misión activa */}
@@ -405,67 +516,6 @@ export function ProfileScreen() {
             Tras la primera carga con conexión, la app entera funciona offline.
           </p>
           <PixelButton tone="gold" block onClick={() => setInstallOpen(false)}>
-            Entendido
-          </PixelButton>
-        </div>
-      </PixelModal>
-
-      {/* Confirmación de importación */}
-      <PixelModal
-        open={importState?.kind === "confirm"}
-        title="Importar copia de seguridad"
-        onClose={() => setImportState(null)}
-      >
-        {importState?.kind === "confirm" && (
-          <div className="stack stack--tight">
-            <p className="small">
-              La copia del {importState.backup.exportedAt.slice(0, 10)} contiene:
-            </p>
-            <ul className="small" style={{ listStyle: "none", display: "grid", gap: 4 }}>
-              <li>· {importState.validation.counts?.profiles ?? 0} perfiles</li>
-              <li>· {importState.validation.counts?.sessions ?? 0} sesiones</li>
-              <li>· {importState.validation.counts?.setLogs ?? 0} series</li>
-              <li>· {importState.validation.counts?.gameEvents ?? 0} eventos de juego</li>
-            </ul>
-            <div className="inline-alert" role="alert">
-              Importar reemplaza TODOS los datos actuales de este dispositivo.
-              Esta acción no se puede deshacer.
-            </div>
-            <PixelButton
-              tone="danger"
-              block
-              onClick={async () => {
-                await importBackup(importState.backup);
-                setImportState({ kind: "done" });
-              }}
-            >
-              Reemplazar mis datos
-            </PixelButton>
-            <PixelButton tone="ghost" block onClick={() => setImportState(null)}>
-              Cancelar
-            </PixelButton>
-          </div>
-        )}
-      </PixelModal>
-
-      {/* Resultado de importación */}
-      <PixelModal
-        open={importState?.kind === "error" || importState?.kind === "done"}
-        title={importState?.kind === "done" ? "Copia importada" : "No se pudo importar"}
-        onClose={() => setImportState(null)}
-        center
-      >
-        <div className="stack stack--tight">
-          {importState?.kind === "error" ? (
-            <div className="inline-alert inline-alert--danger" role="alert">
-              {importState.message} Tus datos actuales siguen intactos.
-            </div>
-          ) : (
-            <div className="inline-alert inline-alert--done" role="status">
-              Copia restaurada correctamente.
-            </div>
-          )}
-          <PixelButton tone="gold" block onClick={() => setImportState(null)}>
             Entendido
           </PixelButton>
         </div>

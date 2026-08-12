@@ -2,7 +2,7 @@
 // descanso, prólogo, bloque forjado y coherencia de la llama.
 
 import { expect, test } from "@playwright/test";
-import { boot, changeClock } from "./helpers";
+import { boot, changeClock, completeAllStages } from "./helpers";
 
 test("día programado: el CTA de misión es visible en el primer viewport 360×800", async ({
   page,
@@ -33,7 +33,8 @@ test("prólogo: sin capítulo activo, llama apagada y coherencia con Campaña", 
   page,
   context
 }) => {
-  await boot(page, context, "2026-08-14"); // viernes: la campaña empieza el lunes 17
+  // Viernes, eligiendo «empezar el próximo lunes» en el onboarding.
+  await boot(page, context, "2026-08-14", "Nahuel", "lunes");
   await expect(page.getByText("La forja aún está fría")).toBeVisible();
   await expect(page.getByText(/se enciende el lunes 17/)).toBeVisible();
   await expect(page.getByRole("button", { name: /Empezar misión/i })).toHaveCount(0);
@@ -80,18 +81,16 @@ test("la llama se pone al rojo al cumplir el objetivo semanal (Carlos, 3 misione
   page,
   context
 }) => {
-  test.slow();
+  // Tres misiones COMPLETAS: las parciales ya no encienden la llama.
+  test.setTimeout(300_000);
   await boot(page, context, "2026-08-10", "Carlos");
   // Lunes, martes y viernes de Carlos
   for (const day of ["2026-08-10", "2026-08-11", "2026-08-14"]) {
     await changeClock(page, day);
     await page.reload({ waitUntil: "networkidle" });
     await page.getByRole("button", { name: /Empezar misión/i }).click();
-    await page.locator(".numctl__value").first().fill("30");
-    await page.getByRole("button", { name: "Guardar serie" }).click();
-    await page.getByRole("button", { name: "Saltar" }).click();
-    await page.getByRole("button", { name: "Salir de la misión" }).click();
-    await page.getByRole("button", { name: "Terminar misión ahora" }).click();
+    await completeAllStages(page, "30");
+    await page.getByRole("button", { name: "Terminar misión", exact: true }).click();
     await page.getByRole("button", { name: "Sellar la misión" }).click();
     await page.getByRole("button", { name: "Volver a la Forja" }).click();
   }

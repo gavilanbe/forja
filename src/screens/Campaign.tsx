@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, touch } from "../db/db";
+import { db } from "../db/db";
 import { useActiveProfile, useToday } from "../ui/hooks";
 import { FlameSprite, PixelButton, PixelFrame, PixelModal, StatusChip } from "../ui/Pixel";
 import { PxSprite } from "../ui/px";
@@ -34,11 +34,30 @@ import {
   nextCampaignStart,
   summarizeBlock
 } from "../logic/campaign";
+import {
+  campaignStats,
+  getActiveCampaign,
+  getCampaigns,
+  startNewCampaign as startCampaignEntity,
+  type CampaignStats
+} from "../logic/campaigns";
 
 export function Campaign() {
   const profile = useActiveProfile();
   const today = useToday();
   const [restartOpen, setRestartOpen] = useState(false);
+  const campaign = useLiveQuery(
+    async () => (profile ? await getActiveCampaign(profile.id) : undefined),
+    [profile?.id]
+  );
+  const pastStats = useLiveQuery(async () => {
+    if (!profile) return [];
+    const all = await getCampaigns(profile.id);
+    const archived = all.filter((c) => c.status === "archivada");
+    const stats: CampaignStats[] = [];
+    for (const c of archived) stats.push(await campaignStats(c, today));
+    return stats;
+  }, [profile?.id]);
   const sessions = useLiveQuery(
     async () =>
       profile
@@ -50,13 +69,17 @@ export function Campaign() {
   if (!profile || sessions === undefined) return <main className="screen" />;
 
   const schedule = scheduleById(profile.scheduleId);
-  const scheduled = sessions.filter((s) => !s.unscheduled);
+  // Solo la campaña activa: las archivadas se consultan aparte, sin mezclar.
+  const scheduled = sessions.filter(
+    (s) => !s.unscheduled && (!campaign || s.campaignId === campaign.id)
+  );
   const weeks = summarizeWeeks(
     scheduled,
     profile.campaignStart,
     profile.weeklyTarget,
     today,
-    CAMPAIGN_WEEKS
+    CAMPAIGN_WEEKS,
+    { joinedKey: campaign?.joinedKey, scheduleWeek: schedule.week }
   );
   const streak = flameStreak(weeks, today, profile.campaignStart);
   const phase = campaignPhase(profile.campaignStart, today);
@@ -66,11 +89,9 @@ export function Campaign() {
   const block = summarizeBlock(weeks);
 
   const startNewCampaign = async () => {
-    const fresh = await db.profiles.get(profile.id);
-    if (!fresh) return;
-    await db.profiles.put(
-      touch({ ...fresh, campaignStart: nextCampaignStart(today) })
-    );
+    // Archiva la campaña activa y crea la nueva como entidad independiente:
+    // capítulos y bonos se reinician sin duplicarse; el historial se conserva.
+    await startCampaignEntity(profile, nextCampaignStart(today));
     setRestartOpen(false);
   };
 
@@ -211,7 +232,11 @@ export function Campaign() {
                           const done = ds.some((s) => s.status === "completada");
                           const adapted = ds.some((s) => s.status === "adaptada");
                           const missed =
-                            key < todayKey && key >= profile.campaignStart && !done && !adapted;
+                            key < todayKey &&
+                            key >= profile.campaignStart &&
+                            key >= (campaign?.joinedKey ?? profile.campaignStart) &&
+                            !done &&
+                            !adapted;
                           let cls = "mini-node";
                           let glyph: React.ReactNode = <PxSprite frames={[G_HAMMER]} palette={PAL_C} scale={2} />;
                           let desc = `${WEEKDAY_SHORT[i]} — ${day?.name}: pendiente`;
@@ -258,6 +283,39 @@ export function Campaign() {
             );
           })}
         </ol>
+        {/* Campañas pasadas: consulta y comparación, sin mezclar nada */}
+        {pastStats && pastStats.length > 0 && (
+          <section className="panel" aria-label="Campañas pasadas">
+            <div className="panel__kicker">
+              <span>Campañas pasadas</span>
+              <span className="panel__hint">archivo</span>
+            </div>
+            <div className="stack stack--tight">
+              {pastStats.map((st, i) => (
+                <div key={st.campaign.id} className="past-campaign">
+                  <p className="small">
+                    <b>Campaña {i + 1}</b> — del {st.campaign.startKey}
+                    {st.campaign.endedAt
+                      ? ` al ${new Date(st.campaign.endedAt).toISOString().slice(0, 10)}`
+                      : ""}
+                  </p>
+                  <p className="small dim">
+                    {st.weeksMet} de {st.campaign.weeksTotal} capítulos forjados ·{" "}
+                    {st.completed} completadas · {st.adapted} adaptadas
+                    {st.partial > 0 ? ` · ${st.partial} parciales` : ""} ·{" "}
+                    {st.totalSets} series · {st.hitos} hitos · {st.xp} XP
+                  </p>
+                </div>
+              ))}
+              {campaign && (
+                <p className="small dim">
+                  La campaña actual empezó el {campaign.startKey}. Sus números
+                  no se mezclan con los de campañas anteriores.
+                </p>
+              )}
+            </div>
+          </section>
+        )}
       </div>
 
       {/* Confirmación de nueva campaña */}

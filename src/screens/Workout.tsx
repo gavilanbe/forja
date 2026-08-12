@@ -1,28 +1,44 @@
 // Entrenamiento activo: una etapa (ejercicio) cada vez, registro de series
-// local-first y temporizador de descanso con timestamp absoluto persistido.
+// local-first y temporizador de descanso con timestamp absoluto persistido
+// POR PERFIL (modo Entrenar Juntos: cada forjador lleva su propio descanso,
+// series, XP y molestias, compartiendo la misma sesión canónica del día).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, touch } from "../db/db";
-import type { Session, SetLog, TimerState } from "../db/types";
-import { dayById, scheduleById } from "../data/routine";
+import { db } from "../db/db";
+import type {
+  Prefs,
+  Profile,
+  Session,
+  SetLog,
+  TimerState
+} from "../db/types";
+import { dayById } from "../data/routine";
 import type { ExercisePrescription } from "../data/types";
-import { codexById } from "../data/codex";
+import { codexById, CODEX } from "../data/codex";
+import { adviceOf, variantById, variantsOf } from "../data/variants";
 import { useActiveProfile, usePrefs, useToday } from "../ui/hooks";
 import { PixelButton, PixelFrame, PixelModal, StatusChip, XPBar } from "../ui/Pixel";
 import { NumberField, RirSelector } from "../ui/controls";
 import {
+  abandonSession,
   completeSession,
   loadTimer,
   logSet,
   recordDiscomfort,
   saveSessionNote,
   saveTimer,
+  sessionEntries,
   setExerciseIndex,
-  startSession
+  startSession,
+  undoLastSet,
+  updateSet,
+  deleteSet
 } from "../logic/session";
 import { defaultIncrement, suggest, type Suggestion } from "../logic/progression";
+import { evaluateIncident, incidentExplanation } from "../logic/incidents";
+import { effectiveGymSetting, effectiveIncrement, setupSummary } from "../logic/gym";
 import { loadTypeOf, midReps, weightValid } from "../data/load";
 import {
   addSeconds,
@@ -35,6 +51,12 @@ import {
 } from "../logic/timer";
 import { playRestEndBeep, vibrate } from "../logic/feedback";
 import { campaignWeekOf, dateKeyOf, weekdayIndex } from "../logic/dates";
+import { effectiveWeekFor } from "../logic/calendar";
+import { acquireWakeLock, notifyRestEnd, type WakeLockHandle } from "../logic/rest";
+import { PxSprite } from "../ui/px";
+import { PAL_C } from "../ui/arcade/palette";
+import { BONFIRE_C } from "../ui/arcade/props";
+import { avatarFrames } from "../ui/arcade/extra";
 
 type Phase =
   | { kind: "cargando" }
@@ -45,34 +67,56 @@ type Phase =
 
 const PER_SIDE_LABEL = { lado: "por lado", brazo: "por brazo", pierna: "por pierna" };
 
+/** Borradores por participante+ejercicio+serie: cambiar de forjador no pierde nada. */
+type DraftMap = Map<
+  string,
+  { weight?: number | null; reps?: number | null; rir?: number }
+>;
+
 export function Workout() {
   const navigate = useNavigate();
-  const profile = useActiveProfile();
-  const prefs = usePrefs(profile?.id);
+  const globalProfile = useActiveProfile();
   const today = useToday();
-  const [session, setSession] = useState<Session | null>(null);
+
+  // Participante activo del registro (modo Entrenar Juntos).
+  const [participantId, setParticipantId] = useState<string | null>(null);
+  const participant = useLiveQuery(
+    async () => (participantId ? await db.profiles.get(participantId) : undefined),
+    [participantId]
+  );
+  const prefs = usePrefs(participant?.id);
+
+  const [sessions, setSessions] = useState<Record<string, Session>>({});
   const [phase, setPhase] = useState<Phase>({ kind: "cargando" });
   const [exitOpen, setExitOpen] = useState(false);
   const [finishOpen, setFinishOpen] = useState(false);
+  const [coParticipants, setCoParticipants] = useState<Profile[]>([]);
   const initRef = useRef(false);
+  const draftsRef = useRef<DraftMap>(new Map());
 
-  // Arranque: recuperar sesión activa o crear la de hoy.
+  const session = participant ? sessions[participant.id] : undefined;
+
+  // Arranque: recuperar sesión activa o crear la de hoy para el perfil activo.
   useEffect(() => {
-    if (!profile || initRef.current) return;
+    if (!globalProfile || initRef.current) return;
     initRef.current = true;
     (async () => {
       let s =
         (await db.sessions
           .where("[profileId+status]")
-          .equals([profile.id, "activa"])
+          .equals([globalProfile.id, "activa"])
           .first()) ?? null;
+      let dayId = s?.dayId ?? null;
       if (!s) {
-        const schedule = scheduleById(profile.scheduleId);
-        let dayId = schedule.week[weekdayIndex(today)];
+        const weekInfo = await effectiveWeekFor(globalProfile, today);
+        const todayInfo = weekInfo.days[weekdayIndex(today)];
+        dayId = todayInfo?.absent ? null : todayInfo?.dayId ?? null;
         let extra = false;
         if (!dayId) {
-          // Día extra: unirse a la sesión de Nahuel (?dia=...), sin XP.
-          const requested = new URLSearchParams(window.location.hash.split("?")[1]).get("dia");
+          // Día extra: unirse a la sesión canónica pedida (?dia=...), sin XP.
+          const requested = new URLSearchParams(
+            window.location.hash.split("?")[1]
+          ).get("dia");
           if (requested && dayById(requested)) {
             dayId = requested;
             extra = true;
@@ -82,93 +126,144 @@ export function Workout() {
           }
         }
         // Prólogo: entrenar antes del inicio no finge misión de campaña.
-        if (campaignWeekOf(profile.campaignStart, today) < 1) extra = true;
+        if (campaignWeekOf(globalProfile.campaignStart, today) < 1) extra = true;
         const done = await db.sessions
           .where("[profileId+dateKey]")
-          .equals([profile.id, dateKeyOf(today)])
+          .equals([globalProfile.id, dateKeyOf(today)])
           .and((x) => x.status === "completada" || x.status === "adaptada")
           .first();
         if (done) {
           navigate(`/mision/resumen/${done.id}`, { replace: true });
           return;
         }
-        s = await startSession(profile, dayId, today, extra);
+        s = await startSession(globalProfile, dayId, today, extra);
       }
-      setSession(s);
+      setSessions((prev) => ({ ...prev, [globalProfile.id]: s! }));
+      setParticipantId(globalProfile.id);
+
+      // ¿Hay otro forjador con la MISMA sesión canónica hoy? (Entrenar Juntos)
+      const others = (await db.profiles.toArray()).filter(
+        (p) => p.id !== globalProfile.id
+      );
+      const co: Profile[] = [];
+      for (const other of others) {
+        const otherWeek = await effectiveWeekFor(other, today);
+        const otherToday = otherWeek.days[weekdayIndex(today)];
+        if (otherToday?.dayId === dayId && !otherToday.absent) co.push(other);
+      }
+      setCoParticipants(co);
+
       // Recuperar temporizador persistido si pertenece a esta sesión.
-      const t = await loadTimer();
+      const t = await loadTimer(globalProfile.id);
       if (t && t.sessionId === s.id && !isFinished(t, Date.now())) {
         setPhase({ kind: "descanso", timer: t });
       } else {
-        if (t && t.sessionId !== s.id) await saveTimer(null);
+        if (t && t.sessionId !== s.id) await saveTimer(globalProfile.id, null);
         setPhase({ kind: "serie" });
       }
     })();
-  }, [profile, navigate, today]);
+  }, [globalProfile, navigate, today]);
 
+  /** Cambia el participante activo sin perder borradores ni descansos. */
+  const switchParticipant = async (target: Profile) => {
+    if (!session || target.id === participantId) return;
+    let targetSession = sessions[target.id];
+    if (!targetSession) {
+      const active = await db.sessions
+        .where("[profileId+status]")
+        .equals([target.id, "activa"])
+        .first();
+      targetSession =
+        active ?? (await startSession(target, session.dayId, today, false));
+      setSessions((prev) => ({ ...prev, [target.id]: targetSession! }));
+    }
+    setParticipantId(target.id);
+    const t = await loadTimer(target.id);
+    if (t && t.sessionId === targetSession.id && !isFinished(t, Date.now())) {
+      setPhase({ kind: "descanso", timer: t });
+    } else {
+      setPhase({ kind: "serie" });
+    }
+  };
+
+  const entries = session ? sessionEntries(session) : [];
   const day = session ? dayById(session.dayId) : undefined;
+  const dayName = session?.prescriptionSnapshot?.dayName ?? day?.name ?? "";
   const sets = useLiveQuery(
     async () =>
       session
-        ? await db.setLogs.where("sessionId").equals(session.id).sortBy("createdAt")
+        ? (await db.setLogs.where("sessionId").equals(session.id).toArray()).sort(
+            (a, b) => a.createdAt - b.createdAt || a.setNumber - b.setNumber
+          )
         : [],
     [session?.id]
   );
 
-  if (!profile || !session || !day || sets === undefined) {
-    if (phase.kind === "sin-mision") return <NoMission />;
+  if (phase.kind === "sin-mision") return <NoMission />;
+  if (!participant || !session || entries.length === 0 || sets === undefined || !globalProfile) {
     return <main className="screen" />;
   }
 
-  const exIndex = Math.min(session.currentExerciseIndex, day.entries.length - 1);
-  const entry = day.entries[exIndex];
+  const exIndex = Math.min(session.currentExerciseIndex, entries.length - 1);
+  const entry = entries[exIndex];
   const exSets = sets.filter((s) => s.exerciseId === entry.exerciseId);
   const nextSetNumber = exSets.length + 1;
   const stageDone = exSets.length >= entry.sets;
-  const isLastStage = exIndex >= day.entries.length - 1;
-  const totalPrescribed = day.entries.reduce((a, e) => a + e.sets, 0);
+  const isLastStage = exIndex >= entries.length - 1;
+  const totalPrescribed = entries.reduce((a, e) => a + e.sets, 0);
   const totalLogged = sets.filter((s) => !s.skipped).length;
 
   const goToStage = async (index: number) => {
     await setExerciseIndex(session, index);
     const fresh = await db.sessions.get(session.id);
-    if (fresh) setSession(fresh);
+    if (fresh) setSessions((prev) => ({ ...prev, [participant.id]: fresh }));
+    setPhase({ kind: "serie" });
+  };
+
+  const handleUndoLast = async () => {
+    const undone = await undoLastSet(session.id);
+    await saveTimer(participant.id, null);
+    if (undone) vibrate(15);
     setPhase({ kind: "serie" });
   };
 
   const handleFinish = async (abandon = false) => {
-    await saveTimer(null);
+    await saveTimer(participant.id, null);
     if (abandon) {
-      const fresh = await db.sessions.get(session.id);
-      if (fresh) await db.sessions.put(touch({ ...fresh, status: "abandonada" }));
+      await abandonSession(session, participant);
       navigate("/", { replace: true });
       return;
     }
-    const discomforts = await db.discomforts
-      .where("sessionId")
-      .equals(session.id)
-      .toArray();
-    const adapted =
-      discomforts.some((d) => d.action !== "continuar") ||
-      sets.some((s) => s.skipped);
-    const result = await completeSession(session, profile, adapted);
+    const result = await completeSession(session, participant, {});
     navigate(`/mision/resumen/${result.session.id}`, { replace: true });
   };
+
+  // Previsión honesta del sellado, para el modal de finalización.
+  const doneCount = totalLogged;
+  const skippedWithReason = sets.filter((s) => s.skipped && s.skipReason).length;
+  const expectedStatus =
+    doneCount === 0
+      ? "abandonada"
+      : doneCount >= totalPrescribed
+        ? "completada"
+        : doneCount + skippedWithReason >= totalPrescribed
+          ? "adaptada"
+          : "parcial";
 
   return (
     <>
       <header className="wk-header">
         <div>
           <div className="wk-header__title">
-            {day.name}
+            {dayName}
             {session.unscheduled ? " · extra" : ""}
           </div>
           <div className="wk-header__sub">
-            Etapa {exIndex + 1} de {day.entries.length} · Serie{" "}
+            Etapa {exIndex + 1} de {entries.length} · Serie{" "}
             {Math.min(nextSetNumber, entry.sets)} de {entry.sets}
           </div>
           <div className="wk-progress" aria-hidden="true">
-            {day.entries.map((_, i) => (
+            {entries.map((_, i) => (
               <span
                 key={i}
                 className={`wk-progress__seg${
@@ -192,27 +287,63 @@ export function Workout() {
         </button>
       </header>
 
-      <main className="screen screen--workout">
+      {/* ENTRENAR JUNTOS: participante activo extremadamente visible */}
+      {coParticipants.length > 0 && (
+        <div
+          className={`party-bar party-bar--${participant.avatarId}`}
+          role="group"
+          aria-label="Quién registra la próxima serie"
+        >
+          <span className="party-bar__label">Registrando:</span>
+          {[globalProfile, ...coParticipants]
+            .filter((p, i, arr) => arr.findIndex((x) => x.id === p.id) === i)
+            .map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className={`party-bar__who${
+                  p.id === participant.id ? " party-bar__who--active" : ""
+                }`}
+                aria-pressed={p.id === participant.id}
+                onClick={() => void switchParticipant(p)}
+              >
+                <PxSprite
+                  frames={avatarFrames(p.avatarId, "neutral").frames}
+                  palette={PAL_C}
+                  scale={2}
+                  label=""
+                />
+                <b>{p.name}</b>
+              </button>
+            ))}
+        </div>
+      )}
+
+      <main
+        className={`screen screen--workout${prefs?.modoCompacto ? " screen--compact" : ""}`}
+      >
         {phase.kind === "descanso" ? (
           <RestView
             timer={phase.timer}
+            participant={participant}
             entry={entry}
+            nextEntry={!isLastStage ? entries[exIndex + 1] : undefined}
             nextSetNumber={Math.min(nextSetNumber, entry.sets)}
             stageDone={stageDone}
-            sound={prefs?.sonido ?? false}
-            vibration={prefs?.vibracion ?? false}
+            prefs={prefs}
             onTimerChange={(t) => {
               setPhase({ kind: "descanso", timer: t });
-              void saveTimer(t);
+              void saveTimer(participant.id, t);
             }}
+            onUndoLast={handleUndoLast}
             onDone={async () => {
-              await saveTimer(null);
+              await saveTimer(participant.id, null);
               setPhase(stageDone ? { kind: "etapa-completa" } : { kind: "serie" });
             }}
           />
         ) : phase.kind === "etapa-completa" || (phase.kind === "serie" && stageDone) ? (
           <StageComplete
-            day={day}
+            entries={entries}
             exIndex={exIndex}
             isLast={isLastStage}
             onNext={() => goToStage(exIndex + 1)}
@@ -221,16 +352,19 @@ export function Workout() {
           />
         ) : (
           <SetLogger
-            key={`${entry.exerciseId}-${nextSetNumber}`}
+            key={`${participant.id}-${entry.exerciseId}-${nextSetNumber}`}
             session={session}
+            participant={participant}
             entry={entry}
             exSets={exSets}
             setNumber={nextSetNumber}
+            drafts={draftsRef.current}
+            compact={!!prefs?.modoCompacto}
             profileIncrements={{
               compuesto: prefs?.incrementoCompuesto ?? 2.5,
               aislamiento: prefs?.incrementoAislamiento ?? 1.25
             }}
-            onSaved={async (isLastSet) => {
+            onSaved={async () => {
               vibrate(20);
               const restSec = entry.restMaxSec;
               const timer: TimerState = {
@@ -242,12 +376,11 @@ export function Workout() {
                 targetEndAt: Date.now() + restSec * 1000,
                 pausedRemainingMs: null
               };
-              await saveTimer(timer);
+              await saveTimer(participant.id, timer);
               setPhase({ kind: "descanso", timer });
-              void isLastSet;
             }}
             onStopExercise={async () => {
-              await saveTimer(null);
+              await saveTimer(participant.id, null);
               setPhase({ kind: "etapa-completa" });
             }}
           />
@@ -290,13 +423,12 @@ export function Workout() {
               Terminar misión ahora
             </PixelButton>
           )}
-          <PixelButton tone="danger" block onClick={() => handleFinish(true)}>
-            Abandonar (descartar misión)
-          </PixelButton>
+          {/* Acción destructiva, separada y con doble confirmación */}
+          <AbandonButton onAbandon={() => handleFinish(true)} />
         </div>
       </PixelModal>
 
-      {/* Confirmación de fin */}
+      {/* Confirmación de fin, con previsión honesta del sello */}
       <PixelModal
         open={finishOpen}
         title="Terminar misión"
@@ -308,6 +440,29 @@ export function Workout() {
             {totalLogged < totalPrescribed &&
               " Las series no realizadas no se marcan como hechas."}
           </p>
+          <StatusChip
+            tone={
+              expectedStatus === "completada"
+                ? "done"
+                : expectedStatus === "adaptada"
+                  ? "warn"
+                  : "default"
+            }
+            dot
+          >
+            {expectedStatus === "completada" && "Se sellará como COMPLETADA"}
+            {expectedStatus === "adaptada" && "Se sellará como ADAPTADA"}
+            {expectedStatus === "parcial" &&
+              "Se sellará como PARCIAL (recompensa reducida)"}
+            {expectedStatus === "abandonada" &&
+              "Sin series: se registrará como abandonada, sin recompensa"}
+          </StatusChip>
+          {expectedStatus === "parcial" && (
+            <p className="small dim">
+              Si omites las series que faltan con su motivo (botón «Omitir
+              serie»), la misión contará como adaptada con cabeza.
+            </p>
+          )}
           <PixelButton tone="primary" big block onClick={() => handleFinish()}>
             Sellar la misión
           </PixelButton>
@@ -317,6 +472,29 @@ export function Workout() {
         </div>
       </PixelModal>
     </>
+  );
+}
+
+/** Abandono con confirmación en dos pasos, lejos de las acciones normales. */
+function AbandonButton({ onAbandon }: { onAbandon: () => void }) {
+  const [confirm, setConfirm] = useState(false);
+  useEffect(() => {
+    if (!confirm) return;
+    const id = setTimeout(() => setConfirm(false), 4000);
+    return () => clearTimeout(id);
+  }, [confirm]);
+  return (
+    <div className="abandon-zone">
+      {confirm ? (
+        <PixelButton tone="danger" block onClick={onAbandon}>
+          Confirmar abandono (sin recompensa de misión)
+        </PixelButton>
+      ) : (
+        <PixelButton tone="danger" block onClick={() => setConfirm(true)}>
+          Abandonar misión…
+        </PixelButton>
+      )}
+    </div>
   );
 }
 
@@ -345,39 +523,60 @@ function NoMission() {
 
 function SetLogger({
   session,
+  participant,
   entry,
   exSets,
   setNumber,
+  drafts,
+  compact,
   profileIncrements,
   onSaved,
   onStopExercise
 }: {
   session: Session;
+  participant: Profile;
   entry: ExercisePrescription;
   exSets: SetLog[];
   setNumber: number;
+  drafts: DraftMap;
+  compact: boolean;
   profileIncrements: { compuesto: number; aislamiento: number };
-  onSaved: (isLastSet: boolean) => void;
+  onSaved: () => void;
   onStopExercise: () => void;
 }) {
   const codex = codexById(entry.exerciseId);
+  const [altChoice, setAltChoice] = useState<string | null>(() => {
+    // Variante pegajosa dentro de la etapa: la última serie manda.
+    const last = exSets[exSets.length - 1];
+    return last?.variantId ?? null;
+  });
+  const variant = variantById(altChoice ?? undefined);
+  const variantCodex = variant?.codexId ? codexById(variant.codexId) : undefined;
+  const techniqueCodex = variantCodex ?? codex;
+
+  const gymSetting = useLiveQuery(
+    async () =>
+      (await effectiveGymSetting(participant.id, entry.exerciseId, altChoice ?? undefined)) ??
+      null,
+    [participant.id, entry.exerciseId, altChoice]
+  );
+
+  // Historial SOLO de la variante actual: máquinas distintas no se mezclan.
   const prevSets = useLiveQuery(
     async () =>
-      await db.setLogs
-        .where("[profileId+dayId+exerciseId]")
-        .equals([session.profileId, session.dayId, entry.exerciseId])
-        .and((s) => s.sessionId !== session.id)
-        .sortBy("createdAt"),
-    [session.profileId, session.dayId, entry.exerciseId, session.id]
+      (
+        await db.setLogs
+          .where("[profileId+dayId+exerciseId]")
+          .equals([participant.id, session.dayId, entry.exerciseId])
+          .and((s) => s.sessionId !== session.id)
+          .sortBy("createdAt")
+      ).filter((s) => (s.variantId ?? null) === (altChoice ?? null)),
+    [participant.id, session.dayId, entry.exerciseId, session.id, altChoice]
   );
-  const prevDiscomfort = useLiveQuery(
-    async () =>
-      await db.discomforts
-        .where("[profileId+exerciseId]")
-        .equals([session.profileId, entry.exerciseId])
-        .and((d) => d.sessionId !== session.id && d.level >= 3)
-        .count(),
-    [session.profileId, entry.exerciseId, session.id]
+
+  const incident = useLiveQuery(
+    async () => await evaluateIncident(participant.id, entry.exerciseId),
+    [participant.id, entry.exerciseId]
   );
 
   const lastSessionSets = useMemo(() => {
@@ -386,35 +585,50 @@ function SetLogger({
     return prevSets.filter((s) => s.sessionId === lastId);
   }, [prevSets]);
 
-  const increment = defaultIncrement(
-    entry,
-    profileIncrements.compuesto,
-    profileIncrements.aislamiento
+  const increment = effectiveIncrement(
+    gymSetting ?? undefined,
+    defaultIncrement(entry, profileIncrements.compuesto, profileIncrements.aislamiento)
   );
 
   const suggestion: Suggestion | null = useMemo(() => {
-    if (prevSets === undefined || prevDiscomfort === undefined) return null;
-    if (lastSessionSets.length === 0 && !prevDiscomfort) return null;
+    if (prevSets === undefined || incident === undefined) return null;
     return suggest({
       prescription: entry,
       lastSets: lastSessionSets,
-      hadDiscomfort: (prevDiscomfort ?? 0) > 0,
+      incidentStatus: incident?.status ?? null,
+      incidentMotivo: incident ? incidentExplanation(incident) : null,
       incrementKg: increment
     });
-  }, [entry, lastSessionSets, prevDiscomfort, prevSets, increment]);
+  }, [entry, lastSessionSets, incident, prevSets, increment]);
 
   const target = entry.rirPerSet[Math.min(setNumber - 1, entry.rirPerSet.length - 1)].rir;
 
+  const draftKey = `${participant.id}:${entry.exerciseId}:${setNumber}`;
+  const draft = drafts.get(draftKey);
+
   // `undefined` = sin tocar (hereda), `null` = borrado a mano (campo vacío).
-  const [weight, setWeight] = useState<number | null | undefined>(undefined);
-  const [reps, setReps] = useState<number | null | undefined>(undefined);
-  const [rir, setRir] = useState<number>(target.max);
+  const [weight, setWeightRaw] = useState<number | null | undefined>(draft?.weight);
+  const [reps, setRepsRaw] = useState<number | null | undefined>(draft?.reps);
+  const [rir, setRirRaw] = useState<number>(draft?.rir ?? target.max);
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
   const [modal, setModal] = useState<
     null | "tecnica" | "alternativa" | "molestia" | "omitir" | "nota"
   >(null);
-  const [altChoice, setAltChoice] = useState<string | null>(null);
+  const [editTarget, setEditTarget] = useState<SetLog | null>(null);
+
+  const setWeight = (v: number | null | undefined) => {
+    setWeightRaw(v);
+    drafts.set(draftKey, { ...drafts.get(draftKey), weight: v ?? null });
+  };
+  const setReps = (v: number | null | undefined) => {
+    setRepsRaw(v);
+    drafts.set(draftKey, { ...drafts.get(draftKey), reps: v ?? null });
+  };
+  const setRir = (v: number) => {
+    setRirRaw(v);
+    drafts.set(draftKey, { ...drafts.get(draftKey), rir: v });
+  };
 
   const note = useLiveQuery(
     async () =>
@@ -425,23 +639,25 @@ function SetLogger({
     [session.id, entry.exerciseId]
   );
 
-  const loadType = loadTypeOf(entry.exerciseId);
+  const loadType = variant?.loadType ?? loadTypeOf(entry.exerciseId);
 
-  // Valores heredados: última serie de esta sesión → sugerencia → sesión
-  // anterior. Sin historial, el peso queda VACÍO (nunca un falso "0 kg") y
-  // las repeticiones apuntan al punto medio del rango prescrito.
+  // Valores heredados: última serie de esta sesión (misma variante) → sesión
+  // anterior (misma variante). La SUGERENCIA nunca se aplica sola: el usuario
+  // la confirma con un toque. Sin historial, el peso queda VACÍO.
+  const exSetsSameVariant = exSets.filter(
+    (s) => (s.variantId ?? null) === (altChoice ?? null) && !s.skipped
+  );
   const inheritedWeight: number | null =
-    exSets.length > 0
-      ? exSets[exSets.length - 1].weightKg
-      : suggestion?.weightKg ??
-        (lastSessionSets.length > 0
-          ? lastSessionSets[lastSessionSets.length - 1].weightKg
-          : loadType === "externa"
-            ? null
-            : 0);
+    exSetsSameVariant.length > 0
+      ? exSetsSameVariant[exSetsSameVariant.length - 1].weightKg
+      : lastSessionSets.length > 0
+        ? lastSessionSets[lastSessionSets.length - 1].weightKg
+        : loadType === "externa"
+          ? null
+          : 0;
   const inheritedReps: number =
-    exSets.length > 0
-      ? exSets[exSets.length - 1].reps
+    exSetsSameVariant.length > 0
+      ? exSetsSameVariant[exSetsSameVariant.length - 1].reps
       : lastSessionSets.length > 0
         ? Math.min(lastSessionSets[lastSessionSets.length - 1].reps, entry.repMax)
         : midReps(entry.repMin, entry.repMax);
@@ -449,12 +665,15 @@ function SetLogger({
   const effWeight = weight === undefined ? inheritedWeight : weight;
   const effReps = reps === undefined ? inheritedReps : reps;
 
-  const weightOk = weightValid(entry.exerciseId, effWeight);
+  const weightOk =
+    effWeight !== null && !Number.isNaN(effWeight) && effWeight >= 0 &&
+    !(effWeight === 0 && loadType === "externa");
   const weightError =
     effWeight === 0 && loadType === "externa"
       ? "0 kg no es una carga válida aquí: introduce el peso de trabajo."
       : null;
   const canSave = !saving && weightOk && effReps !== null && effReps > 0;
+  void weightValid;
 
   const save = async () => {
     if (saving || !weightOk || !effReps || effReps <= 0) return;
@@ -466,11 +685,13 @@ function SetLogger({
         rir,
         setNumber,
         exerciseId: entry.exerciseId,
+        variantId: altChoice ?? undefined,
         source: altChoice ? "alternativa" : "normal",
-        altExerciseId: altChoice ?? undefined
+        altExerciseId: variant?.nombre ?? undefined
       });
+      drafts.delete(draftKey);
       setSavedFlash(true);
-      setTimeout(() => onSaved(setNumber >= entry.sets), 350);
+      setTimeout(() => onSaved(), 350);
     } finally {
       setSaving(false);
     }
@@ -483,19 +704,29 @@ function SetLogger({
       rir: 0,
       setNumber,
       exerciseId: entry.exerciseId,
+      variantId: altChoice ?? undefined,
       skipped: true,
       skipReason: reason
     });
     setModal(null);
-    onSaved(setNumber >= entry.sets);
+    onSaved();
   };
 
   if (prevSets === undefined) return null;
 
+  const setup = setupSummary(gymSetting ?? undefined);
+
   return (
     <div className="stack">
       <div>
-        <h2 className="wk-exname">{codex?.nombre ?? entry.exerciseId}</h2>
+        <h2 className="wk-exname">
+          {variant ? variant.nombre : codex?.nombre ?? entry.exerciseId}
+        </h2>
+        {variant && (
+          <p className="small dim">
+            Variante de {codex?.nombre}. Historial y cargas propios.
+          </p>
+        )}
         <div className="wk-prescription">
           <span>
             <b>
@@ -514,59 +745,77 @@ function SetLogger({
             {entry.restNote ? ` ${entry.restNote}` : ""}
           </span>
         </div>
-        {entry.note && <p className="small dim" style={{ marginTop: 4 }}>{entry.note}</p>}
-        {altChoice && (
-          <div style={{ marginTop: "var(--s2)" }}>
-            <StatusChip tone="blue" dot>
-              Alternativa: {altChoice}
-            </StatusChip>
-          </div>
+        {entry.note && !compact && (
+          <p className="small dim" style={{ marginTop: 4 }}>{entry.note}</p>
+        )}
+        {/* MI GIMNASIO: montaje precargado */}
+        {setup && (
+          <p className="wk-setup" role="note">
+            <span aria-hidden="true">⚙ </span>
+            {setup}
+            {gymSetting?.setupNotes ? ` — ${gymSetting.setupNotes}` : ""}
+          </p>
         )}
       </div>
 
-      {/* Rendimiento anterior */}
-      <div className="wk-prev">
-        {lastSessionSets.length > 0 ? (
-          <>
-            La vez anterior:
-            <div className="wk-prev__sets">
-              {lastSessionSets.map((s) => (
-                <span key={s.id} className="wk-prev__set">
-                  {s.skipped ? "omitida" : `${s.weightKg} kg × ${s.reps} @ RIR ${s.rir}`}
-                </span>
-              ))}
-            </div>
-          </>
-        ) : (
-          <span>
-            Primera vez en la campaña: busca la parte media del rango con RIR 2
-            real y técnica estable.
-          </span>
-        )}
-      </div>
+      {/* Rendimiento anterior (de esta variante) */}
+      {!compact && (
+        <div className="wk-prev">
+          {lastSessionSets.length > 0 ? (
+            <>
+              La vez anterior{variant ? " (misma variante)" : ""}:
+              <div className="wk-prev__sets">
+                {lastSessionSets.map((s) => (
+                  <span key={s.id} className="wk-prev__set">
+                    {s.skipped ? "omitida" : `${s.weightKg} kg × ${s.reps} @ RIR ${s.rir}`}
+                  </span>
+                ))}
+              </div>
+            </>
+          ) : (
+            <span>
+              {variant
+                ? "Primera vez con esta variante: calibra la carga desde cero, sin heredar la de otra máquina."
+                : "Primera vez en la campaña: busca la parte media del rango con RIR 2 real y técnica estable."}
+            </span>
+          )}
+        </div>
+      )}
 
-      {suggestion && lastSessionSets.length > 0 && (
+      {/* Sugerencia: SIEMPRE explicada y nunca auto-aplicada */}
+      {suggestion && (lastSessionSets.length > 0 || suggestion.kind === "molestia") && (
         <div
-          className={`wk-suggest${suggestion.kind === "molestia" ? " wk-suggest--warn" : ""}`}
+          className={`wk-suggest${
+            suggestion.kind === "molestia" || suggestion.kind === "seguimiento"
+              ? " wk-suggest--warn"
+              : ""
+          }`}
         >
-          {suggestion.kind === "subir" && (
-            <>
-              Sugerencia: <b>sube a {suggestion.weightKg} kg</b>. {suggestion.motivo}
-            </>
-          )}
-          {suggestion.kind === "mantener" && (
-            <>
-              Sugerencia: <b>mantén {suggestion.weightKg} kg</b>. {suggestion.motivo}
-            </>
-          )}
-          {suggestion.kind === "bajar" && (
-            <>
-              Sugerencia: <b>baja a {suggestion.weightKg} kg</b> o mantén.{" "}
-              {suggestion.motivo}
-            </>
-          )}
-          {suggestion.kind === "molestia" && <>{suggestion.motivo}</>}
-          {suggestion.kind === "sin-datos" && <>{suggestion.motivo}</>}
+          <p style={{ margin: 0 }}>
+            {suggestion.kind === "subir" && (
+              <>Sugerencia: <b>subir a {suggestion.weightKg} kg</b>. </>
+            )}
+            {suggestion.kind === "mantener" && (
+              <>Sugerencia: <b>mantener {suggestion.weightKg} kg</b>. </>
+            )}
+            {suggestion.kind === "bajar" && (
+              <>Sugerencia: <b>bajar a {suggestion.weightKg} kg</b> o mantener. </>
+            )}
+            {suggestion.kind === "seguimiento" && (
+              <>Sugerencia: <b>mantener {suggestion.weightKg} kg</b>. </>
+            )}
+            {suggestion.motivo}
+          </p>
+          {suggestion.weightKg !== undefined &&
+            suggestion.weightKg !== effWeight && (
+              <PixelButton
+                tone="gold"
+                sans
+                onClick={() => setWeight(suggestion.weightKg!)}
+              >
+                Aplicar {suggestion.weightKg} kg
+              </PixelButton>
+            )}
         </div>
       )}
 
@@ -596,7 +845,7 @@ function SetLogger({
       />
       <RirSelector value={rir} targetMin={target.min} targetMax={target.max} onChange={setRir} />
 
-      <div>
+      <div className="wk-savezone">
         <PixelButton tone="primary" big block disabled={!canSave} onClick={save}>
           Guardar serie
         </PixelButton>
@@ -615,20 +864,30 @@ function SetLogger({
         </p>
       </div>
 
-      {/* Series ya registradas de esta etapa */}
+      {/* Series ya registradas de esta etapa: toca una para corregirla */}
       {exSets.length > 0 && (
         <div className="wk-setlist">
           {exSets.map((s) => (
-            <div key={s.id} className="wk-setlist__row">
+            <button
+              key={s.id}
+              type="button"
+              className="wk-setlist__row wk-setlist__row--btn"
+              onClick={() => setEditTarget(s)}
+              aria-label={`Corregir serie ${s.setNumber}`}
+            >
               <span>S{s.setNumber}</span>
               {s.skipped ? (
                 <span>Omitida — {s.skipReason}</span>
               ) : (
                 <b>
                   {s.weightKg} kg × {s.reps} @ RIR {s.rir}
+                  {s.variantId ? " · variante" : ""}
                 </b>
               )}
-            </div>
+              <span className="wk-setlist__edit" aria-hidden="true">
+                editar
+              </span>
+            </button>
           ))}
         </div>
       )}
@@ -639,7 +898,7 @@ function SetLogger({
           Técnica
         </PixelButton>
         <PixelButton tone="ghost" onClick={() => setModal("alternativa")}>
-          Máquina ocupada: alternativas
+          {variant ? "Cambiar de variante" : "Máquina ocupada: alternativas"}
         </PixelButton>
         <PixelButton tone="ghost" onClick={() => setModal("molestia")}>
           Molestia / dolor
@@ -656,18 +915,24 @@ function SetLogger({
         </PixelButton>
       </div>
 
-      {/* Técnica */}
+      {/* Técnica (de la variante si tiene entrada propia en el Códice) */}
       <PixelModal
         open={modal === "tecnica"}
-        title={codex?.nombre ?? "Técnica"}
+        title={variant ? variant.nombre : codex?.nombre ?? "Técnica"}
         onClose={() => setModal(null)}
       >
-        {codex && (
+        {techniqueCodex && (
           <div className="stack stack--tight">
+            {variant && !variantCodex && (
+              <p className="small dim">
+                Técnica del ejercicio principal ({codex?.nombre}): los puntos
+                clave aplican igual a esta variante.
+              </p>
+            )}
             <div className="codex-section">
               <h3>Colocación</h3>
               <ul>
-                {codex.colocacion.map((c, i) => (
+                {techniqueCodex.colocacion.map((c, i) => (
                   <li key={i}>{c}</li>
                 ))}
               </ul>
@@ -675,7 +940,7 @@ function SetLogger({
             <div className="codex-section">
               <h3>Ejecución</h3>
               <ul>
-                {codex.ejecucion.map((c, i) => (
+                {techniqueCodex.ejecucion.map((c, i) => (
                   <li key={i}>{c}</li>
                 ))}
               </ul>
@@ -683,7 +948,7 @@ function SetLogger({
             <div className="codex-section codex-section--errores">
               <h3>Errores frecuentes</h3>
               <ul>
-                {codex.errores.map((c, i) => (
+                {techniqueCodex.errores.map((c, i) => (
                   <li key={i}>{c}</li>
                 ))}
               </ul>
@@ -695,29 +960,37 @@ function SetLogger({
         )}
       </PixelModal>
 
-      {/* Alternativa / máquina ocupada */}
+      {/* Variantes estructuradas */}
       <PixelModal
         open={modal === "alternativa"}
-        title="Usar una alternativa"
+        title="Usar una variante"
         onClose={() => setModal(null)}
       >
         <div className="stack stack--tight">
           <p className="small dim">
-            Alternativas documentadas en el manual. Las series cuentan igual.
+            Variantes documentadas en el manual. Cada una guarda su propio
+            historial de cargas: la serie cuenta igual para la misión.
           </p>
-          {(codex?.alternativas ?? []).map((alt) => (
+          {variantsOf(entry.exerciseId).map((v) => (
             <PixelButton
-              key={alt}
-              tone={altChoice === alt ? "gold" : "ghost"}
+              key={v.id}
+              tone={altChoice === v.id ? "gold" : "ghost"}
               sans
               block
               onClick={() => {
-                setAltChoice(alt);
+                setAltChoice(v.id);
+                setWeightRaw(undefined);
+                setRepsRaw(undefined);
                 setModal(null);
               }}
             >
-              {alt}
+              {v.nombre}
             </PixelButton>
+          ))}
+          {adviceOf(entry.exerciseId).map((a) => (
+            <p key={a} className="small dim">
+              Consejo del manual: {a}
+            </p>
           ))}
           {altChoice && (
             <PixelButton
@@ -725,6 +998,8 @@ function SetLogger({
               block
               onClick={() => {
                 setAltChoice(null);
+                setWeightRaw(undefined);
+                setRepsRaw(undefined);
                 setModal(null);
               }}
             >
@@ -740,9 +1015,14 @@ function SetLogger({
         onClose={() => setModal(null)}
         session={session}
         exerciseId={entry.exerciseId}
-        alternatives={codex?.alternativas ?? []}
-        onAdapt={(alt) => {
-          if (alt) setAltChoice(alt);
+        variantId={altChoice ?? undefined}
+        variants={variantsOf(entry.exerciseId).map((v) => v.id)}
+        onAdapt={(variantId) => {
+          if (variantId) {
+            setAltChoice(variantId);
+            setWeightRaw(undefined);
+            setRepsRaw(undefined);
+          }
           setModal(null);
         }}
         onStop={() => {
@@ -759,7 +1039,9 @@ function SetLogger({
       >
         <div className="stack stack--tight">
           <p className="small dim">
-            La serie quedará registrada como no realizada, con su motivo.
+            La serie quedará registrada como no realizada, con su motivo. Así
+            la misión puede sellarse como adaptada, nunca como completada a
+            medias.
           </p>
           {["Fatiga", "Sin tiempo", "Máquina no disponible", "Molestia"].map((r) => (
             <PixelButton key={r} tone="ghost" sans block onClick={() => skipSet(r)}>
@@ -783,7 +1065,117 @@ function SetLogger({
           setModal(null);
         }}
       />
+
+      {/* Corregir una serie guardada */}
+      <EditSetModal
+        target={editTarget}
+        onClose={() => setEditTarget(null)}
+      />
     </div>
+  );
+}
+
+// ── Corregir una serie (editar / eliminar con confirmación) ─────────────────
+
+export function EditSetModal({
+  target,
+  onClose
+}: {
+  target: SetLog | null;
+  onClose: () => void;
+}) {
+  const [weight, setWeight] = useState<number | null>(null);
+  const [reps, setReps] = useState<number | null>(null);
+  const [rir, setRir] = useState(2);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (target) {
+      setWeight(target.weightKg);
+      setReps(target.reps);
+      setRir(target.rir);
+      setConfirmDelete(false);
+      setError(null);
+    }
+  }, [target]);
+
+  if (!target) return null;
+
+  const saveEdit = async () => {
+    if (weight === null || reps === null || reps <= 0) {
+      setError("Revisa peso y repeticiones antes de guardar.");
+      return;
+    }
+    try {
+      await updateSet(target.id, { weightKg: weight, reps, rir });
+      onClose();
+    } catch (e) {
+      setError(String(e instanceof Error ? e.message : e));
+    }
+  };
+
+  const doDelete = async () => {
+    await deleteSet(target.id);
+    onClose();
+  };
+
+  return (
+    <PixelModal open title={`Serie ${target.setNumber}`} onClose={onClose}>
+      <div className="stack stack--tight">
+        {target.skipped ? (
+          <>
+            <p className="small dim">
+              Serie omitida ({target.skipReason}). Puedes eliminarla si fue un
+              error; el progreso y la XP se recalculan.
+            </p>
+          </>
+        ) : (
+          <>
+            <NumberField
+              label="Peso"
+              hint="kg"
+              value={weight}
+              step={0.25}
+              decimals
+              onChange={setWeight}
+            />
+            <NumberField
+              label="Repeticiones"
+              value={reps}
+              step={1}
+              max={99}
+              onChange={setReps}
+            />
+            <RirSelector value={rir} targetMin={0} targetMax={4} onChange={setRir} />
+            {error && (
+              <p className="field-error" role="alert">
+                {error}
+              </p>
+            )}
+            <PixelButton tone="primary" block onClick={saveEdit}>
+              Guardar corrección
+            </PixelButton>
+          </>
+        )}
+        <p className="small dim">
+          Progreso, volumen, hitos y XP se recalculan al corregir. Nada se
+          duplica ni se borra en silencio.
+        </p>
+        {confirmDelete ? (
+          <PixelButton tone="danger" block onClick={doDelete}>
+            Confirmar: eliminar esta serie
+          </PixelButton>
+        ) : (
+          <PixelButton tone="danger" block onClick={() => setConfirmDelete(true)}>
+            Eliminar serie…
+          </PixelButton>
+        )}
+        <PixelButton tone="ghost" sans block onClick={onClose}>
+          Cancelar
+        </PixelButton>
+      </div>
+    </PixelModal>
   );
 }
 
@@ -838,7 +1230,8 @@ function DiscomfortModal({
   onClose,
   session,
   exerciseId,
-  alternatives,
+  variantId,
+  variants,
   onAdapt,
   onStop
 }: {
@@ -846,8 +1239,9 @@ function DiscomfortModal({
   onClose: () => void;
   session: Session;
   exerciseId: string;
-  alternatives: string[];
-  onAdapt: (alt: string | null) => void;
+  variantId?: string;
+  variants: string[];
+  onAdapt: (variantId: string | null) => void;
   onStop: () => void;
 }) {
   const [level, setLevel] = useState(3);
@@ -861,7 +1255,7 @@ function DiscomfortModal({
       : level <= 4
         ? {
             tone: "warn" as const,
-            texto: "Modifica: baja carga 10–20 %, acorta el rango irritante o usa la alternativa."
+            texto: "Modifica: baja carga 10–20 %, acorta el rango irritante o usa una variante."
           }
         : {
             tone: "danger" as const,
@@ -869,7 +1263,7 @@ function DiscomfortModal({
           };
 
   const saveAnd = async (action: "continuar" | "adaptar" | "detener", alt?: string) => {
-    await recordDiscomfort(session, exerciseId, level, action);
+    await recordDiscomfort(session, exerciseId, level, action, undefined, variantId);
     if (action === "continuar") onClose();
     else if (action === "adaptar") onAdapt(alt ?? null);
     else onStop();
@@ -906,15 +1300,15 @@ function DiscomfortModal({
         )}
         {level >= 3 && level <= 4 && (
           <>
-            {alternatives.map((alt) => (
+            {variants.map((vid) => (
               <PixelButton
-                key={alt}
+                key={vid}
                 tone="ghost"
                 sans
                 block
-                onClick={() => saveAnd("adaptar", alt)}
+                onClick={() => saveAnd("adaptar", vid)}
               >
-                Cambiar a: {alt}
+                Cambiar a: {variantById(vid)?.nombre ?? vid}
               </PixelButton>
             ))}
             <PixelButton tone="gold" block onClick={() => saveAnd("adaptar")}>
@@ -939,23 +1333,23 @@ function DiscomfortModal({
 // ── Etapa completada ────────────────────────────────────────────────────────
 
 function StageComplete({
-  day,
+  entries,
   exIndex,
   isLast,
   onNext,
   onExtra,
   onFinish
 }: {
-  day: NonNullable<ReturnType<typeof dayById>>;
+  entries: ExercisePrescription[];
   exIndex: number;
   isLast: boolean;
   onNext: () => void;
   onExtra: () => void;
   onFinish: () => void;
 }) {
-  const entry = day.entries[exIndex];
+  const entry = entries[exIndex];
   const codex = codexById(entry.exerciseId);
-  const next = !isLast ? day.entries[exIndex + 1] : undefined;
+  const next = !isLast ? entries[exIndex + 1] : undefined;
   const nextCodex = next ? codexById(next.exerciseId) : undefined;
   return (
     <div className="stack">
@@ -994,40 +1388,73 @@ function StageComplete({
   );
 }
 
-// ── Descanso ────────────────────────────────────────────────────────────────
+// ── Descanso: campamento JRPG ───────────────────────────────────────────────
 
 function RestView({
   timer,
+  participant,
   entry,
+  nextEntry,
   nextSetNumber,
   stageDone,
-  sound,
-  vibration,
+  prefs,
   onTimerChange,
+  onUndoLast,
   onDone
 }: {
   timer: TimerState;
+  participant: Profile;
   entry: ExercisePrescription;
+  nextEntry?: ExercisePrescription;
   nextSetNumber: number;
   stageDone: boolean;
-  sound: boolean;
-  vibration: boolean;
+  prefs: Prefs | undefined;
   onTimerChange: (t: TimerState) => void;
+  onUndoLast: () => void;
   onDone: () => void;
 }) {
   const codex = codexById(entry.exerciseId);
+  const nextCodex = nextEntry ? codexById(nextEntry.exerciseId) : undefined;
   const [nowMs, setNowMs] = useState(() => Date.now());
   const firedRef = useRef(false);
+  const wakeLockRef = useRef<WakeLockHandle | null>(null);
+
+  const sound = prefs?.sonido ?? false;
+  const vibration = prefs?.vibracion ?? false;
 
   useEffect(() => {
     const id = setInterval(() => setNowMs(Date.now()), 250);
-    const onVis = () => setNowMs(Date.now());
+    const onVis = () => {
+      setNowMs(Date.now());
+      // Reintentar el wake lock al volver (el sistema lo libera en segundo plano).
+      if (document.visibilityState === "visible" && prefs?.wakeLock) {
+        void acquireWakeLock().then((h) => {
+          wakeLockRef.current?.release();
+          wakeLockRef.current = h;
+        });
+      }
+    };
     document.addEventListener("visibilitychange", onVis);
     return () => {
       clearInterval(id);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, []);
+  }, [prefs?.wakeLock]);
+
+  // Wake Lock como mejora progresiva mientras dura el descanso.
+  useEffect(() => {
+    if (!prefs?.wakeLock) return;
+    let cancelled = false;
+    void acquireWakeLock().then((h) => {
+      if (cancelled) h?.release();
+      else wakeLockRef.current = h;
+    });
+    return () => {
+      cancelled = true;
+      wakeLockRef.current?.release();
+      wakeLockRef.current = null;
+    };
+  }, [prefs?.wakeLock]);
 
   const ms = remainingMs(timer, nowMs);
   const finished = ms <= 0;
@@ -1037,8 +1464,11 @@ function RestView({
       firedRef.current = true;
       if (sound) playRestEndBeep();
       if (vibration) vibrate([120, 60, 120]);
+      if (prefs?.notificacionDescanso) {
+        notifyRestEnd(codex?.nombre ?? "siguiente serie");
+      }
     }
-  }, [finished, sound, vibration]);
+  }, [finished, sound, vibration, prefs?.notificacionDescanso, codex?.nombre]);
 
   // Indicación técnica: una línea de ejecución, estable por serie.
   const cue = useMemo(() => {
@@ -1048,11 +1478,21 @@ function RestView({
   }, [codex, nextSetNumber]);
 
   const paused = timer.pausedRemainingMs !== null;
-
   const skip = useCallback(() => void onDone(), [onDone]);
 
   return (
-    <div className="rest">
+    <div className="rest rest--camp">
+      {/* Escena de campamento: el forjador descansa junto al fuego */}
+      <div className="rest__scene" aria-hidden="true">
+        <PxSprite
+          frames={avatarFrames(participant.avatarId, "recuperando").frames}
+          palette={PAL_C}
+          fps={avatarFrames(participant.avatarId, "recuperando").fps}
+          scale={3}
+        />
+        <PxSprite frames={BONFIRE_C} palette={PAL_C} fps={6} scale={3} />
+      </div>
+
       <span className="px-label">
         {stageDone ? "Etapa superada · respira" : "Campamento breve"}
       </span>
@@ -1106,7 +1546,21 @@ function RestView({
           {entry.repMin}–{entry.repMax} reps
         </p>
       )}
+      {stageDone && nextCodex && (
+        <p className="rest__next">
+          Próximo ejercicio: <b>{nextCodex.nombre}</b>
+        </p>
+      )}
       {cue && <p className="rest__cue">{cue}</p>}
+
+      {/* Acción rápida de corrección, separada de los controles principales */}
+      <div className="rest__undo">
+        <PixelButton tone="ghost" sans block onClick={onUndoLast}>
+          DESHACER ÚLTIMA SERIE
+        </PixelButton>
+      </div>
     </div>
   );
 }
+
+void CODEX;

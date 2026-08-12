@@ -1797,3 +1797,396 @@ main.screen--workout {
     width: 48px;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   FORJA v3 — campañas, variantes, historial, MI GIMNASIO, cosméticos,
+   ENTRENAR JUNTOS, accesibilidad. Mismo lenguaje: acero, brasa, pixel.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── Accesibilidad global ──────────────────────────────────────────────── */
+
+/* Tamaño de texto configurable (solo texto de lectura; el pixel-art de
+   títulos escala con el layout). */
+:root[data-textsize="grande"] { font-size: 112.5%; }
+:root[data-textsize="enorme"] { font-size: 125%; }
+
+/* Alto contraste: refuerza textos secundarios y bordes. */
+:root[data-contrast="alto"] {
+  --text-dim: #cfdcf2;
+  --steel: #7d92b8;
+}
+:root[data-contrast="alto"] .small.dim,
+:root[data-contrast="alto"] .dim {
+  color: var(--text-dim);
+}
+
+/* Objetivo táctil mínimo 44px en controles pequeños heredados. */
+.toggle,
+.mini-btn,
+.chapter-row__link,
+.wk-exit {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Interruptor con estado textual visible (no solo color). */
+.toggle {
+  width: auto;
+  min-width: 122px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 10px 0 34px;
+  cursor: pointer;
+}
+.toggle::after {
+  top: 50%;
+  transform: translateY(-50%);
+  transition: none;
+}
+.toggle--on::after {
+  transform: translateY(-50%);
+  left: auto;
+  right: 2px;
+}
+.toggle--on {
+  justify-content: flex-start;
+  padding: 0 34px 0 10px;
+}
+.toggle__state {
+  font-family: var(--font-pixel, monospace);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+.toggle--on .toggle__state {
+  color: var(--done);
+}
+
+/* ── Filtros y formularios ─────────────────────────────────────────────── */
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s2) var(--s3);
+}
+.filter-item {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.filter-item__label {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.date-input,
+.text-input,
+.search-input {
+  width: 100%;
+  min-height: 44px;
+  background: var(--bg-deep);
+  border: var(--border-px) solid var(--steel);
+  color: var(--text);
+  padding: 0 var(--s3);
+  font: inherit;
+}
+.date-input:focus,
+.text-input:focus,
+.search-input:focus {
+  border-color: var(--gold);
+  outline: none;
+}
+.search-input {
+  min-height: 48px;
+}
+
+/* ── Historial ─────────────────────────────────────────────────────────── */
+
+.history-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  width: 100%;
+  min-height: 56px;
+  background: var(--surface);
+  border: var(--border-px) solid var(--steel-dark);
+  padding: var(--s3);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.history-row:active { background: var(--surface-raised); }
+.history-row__main {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.history-row__side {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+  flex-shrink: 0;
+}
+.past-campaign {
+  border-left: 3px solid var(--steel-dark);
+  padding-left: var(--s3);
+}
+
+/* ── Series: lista editable ────────────────────────────────────────────── */
+
+.wk-setlist__row--btn {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--steel-dark);
+  color: inherit;
+  font: inherit;
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: 44px;
+  cursor: pointer;
+  text-align: left;
+}
+.wk-setlist__edit {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-dim);
+  text-decoration: underline;
+}
+.wk-setup {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--gold);
+  border: 1px dashed var(--steel-dark);
+  padding: 6px 8px;
+}
+.wk-savezone {
+  /* Sin sticky: un contenedor fijo interceptaba los toques de las
+     herramientas inferiores. El scroll natural mantiene el botón a mano. */
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.abandon-zone {
+  margin-top: var(--s4);
+  border-top: 1px dashed var(--danger);
+  padding-top: var(--s3);
+}
+
+/* Modo compacto: menos aire, controles directos. */
+.screen--compact .wk-prescription { font-size: 12px; }
+.screen--compact .stack { gap: var(--s2); }
+.screen--compact .wk-tools { gap: var(--s1); }
+
+/* ── Descanso: campamento ──────────────────────────────────────────────── */
+
+.rest--camp { padding-top: var(--s3); }
+.rest__scene {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: var(--s4);
+  margin-bottom: var(--s2);
+  image-rendering: pixelated;
+}
+.rest__undo {
+  margin-top: var(--s5);
+  border-top: 1px dashed var(--steel-dark);
+  padding-top: var(--s3);
+  width: 100%;
+  max-width: 320px;
+}
+
+/* ── ENTRENAR JUNTOS ───────────────────────────────────────────────────── */
+
+.party-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s2) var(--s3);
+  background: var(--surface-raised);
+  border-bottom: 3px solid var(--gold);
+  max-width: 100%;
+  overflow: hidden;
+}
+.party-bar__label {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.party-bar__who {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  min-width: 0;
+  flex-shrink: 1;
+  padding: 4px 8px;
+  background: var(--bg-deep);
+  border: var(--border-px) solid var(--steel-dark);
+  color: var(--text-dim);
+  font: inherit;
+  cursor: pointer;
+}
+.party-bar__who--active {
+  border-color: var(--gold);
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: 0 0 0 2px var(--shadow);
+}
+.party-bar__who--active b { color: var(--gold); }
+
+/* ── Onboarding: elección de fecha ─────────────────────────────────────── */
+
+.datechoice {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: var(--border-px) solid var(--steel-dark);
+  color: var(--text);
+  padding: var(--s3);
+  font: inherit;
+  cursor: pointer;
+  min-height: 44px;
+}
+.datechoice--sel {
+  border-color: var(--gold);
+  background: var(--surface-raised);
+}
+
+/* ── MI GIMNASIO y editor de rutina ────────────────────────────────────── */
+
+.gym-list {
+  display: grid;
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--steel-dark);
+}
+.gym-list__row {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: 44px;
+  padding: 0 var(--s3);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--steel-dark);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.gym-list__row:active { background: var(--surface-raised); }
+
+.routine-entry {
+  border: 1px solid var(--steel-dark);
+  padding: var(--s2) var(--s3);
+}
+.routine-entry__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+.routine-entry__title {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  min-height: 44px;
+  cursor: pointer;
+}
+.routine-entry__movers { display: flex; gap: 4px; }
+.mini-btn {
+  background: var(--bg-deep);
+  border: var(--border-px) solid var(--steel-dark);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  padding: 0 10px;
+  cursor: pointer;
+}
+.mini-btn:disabled { opacity: 0.4; cursor: default; }
+
+.cal-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: 44px;
+}
+.cal-row__day {
+  width: 82px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: capitalize;
+}
+
+/* ── Cosméticos ────────────────────────────────────────────────────────── */
+
+.cosmetic-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s2);
+  margin-bottom: var(--s3);
+}
+.cosmetic-card {
+  display: grid;
+  gap: 4px;
+  padding: var(--s3);
+  min-height: 64px;
+  background: var(--surface);
+  border: var(--border-px) solid var(--steel-dark);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cosmetic-card--equipado { border-color: var(--done); }
+.cosmetic-card--disponible { border-color: var(--gold); }
+.cosmetic-card--bloqueado {
+  opacity: 0.6;
+  cursor: default;
+  border-style: dashed;
+}
+
+/* ── Códice ────────────────────────────────────────────────────────────── */
+
+.knowledge-list {
+  display: grid;
+  gap: 6px;
+  padding-left: 18px;
+  font-size: 0.92em;
+}
+.fav-btn {
+  min-width: 44px;
+  min-height: 44px;
+  background: var(--bg-deep);
+  border: var(--border-px) solid var(--steel-dark);
+  color: var(--text-dim);
+  font-size: 20px;
+  cursor: pointer;
+}
+.fav-btn--on {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+/* Zoom 200 %: los grids de dos columnas caen a una. */
+@media (max-width: 420px) {
+  :root[data-textsize="enorme"] .filter-grid,
+  :root[data-textsize="enorme"] .cosmetic-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 340px) {
+  .filter-grid,
+  .cosmetic-grid {
+    grid-template-columns: 1fr;
+  }
+}
