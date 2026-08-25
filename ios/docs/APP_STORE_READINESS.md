@@ -15,6 +15,7 @@ El Mac ya dispone de espacio suficiente y es compatible con Xcode 26.3. GitHub A
 - Compilación Release separada y control automático de que los hooks de QA visual no entren en el binario.
 - Capturas revisadas en iPhone SE (3.ª generación), iPhone 16 Pro y iPhone 16 Pro Max.
 - Pipeline de capturas de ficha preparado para iPhone 16 Pro Max a 1320 × 2868, uno de los tamaños de 6,9 pulgadas aceptados por App Store Connect.
+- Copias JPEG de máxima calidad generadas sin canal alfa; los PNG originales de Simulator conservan alfa y sirven solo para QA.
 - Icono provisional original de 1024 × 1024, PNG opaco y sin esquinas preaplicadas.
 - Datos de demostración para capturas aislados tras `#if DEBUG`; la compilación Release no los contiene.
 

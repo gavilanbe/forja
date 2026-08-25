@@ -108,3 +108,12 @@ capture_device "iPhone 16 Pro" "iphone-16-pro"
 capture_device "iPhone 16 Pro Max" "iphone-16-pro-max"
 
 test -n "$(find "$OUTPUT_DIR" -name '*.png' -print -quit)"
+
+APP_STORE_DIR="$OUTPUT_DIR/app-store-6.9"
+mkdir -p "$APP_STORE_DIR"
+for screenshot in "$OUTPUT_DIR"/iphone-16-pro-max-*.png; do
+  output_file="$APP_STORE_DIR/$(basename "${screenshot%.png}").jpg"
+  sips -s format jpeg -s formatOptions best "$screenshot" --out "$output_file" >/dev/null
+done
+
+test -n "$(find "$APP_STORE_DIR" -name '*.jpg' -print -quit)"

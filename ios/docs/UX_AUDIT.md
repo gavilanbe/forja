@@ -90,6 +90,8 @@ Campaña, Progreso, Códice y Perfil muestran una jerarquía coherente y una bar
 
 La misión activa es el flujo principal del producto y no debe quedar fuera de la revisión automatizada. El arnés abre una misión real sobre el almacén efímero y captura peso, repeticiones, RIR, sugerencia y acciones de seguridad en iPhone 16 Pro y Pro Max.
 
+Simulator exporta PNG con canal alfa aunque la interfaz sea opaca. El pipeline conserva esos originales para QA y genera además JPEG de máxima calidad, 1320 × 2868 y sin alfa, como bases compatibles con App Store Connect.
+
 ## Validación todavía pendiente
 
 - Dynamic Type en XL y tamaños de accesibilidad.
