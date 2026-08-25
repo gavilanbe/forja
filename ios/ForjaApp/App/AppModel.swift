@@ -25,7 +25,12 @@ final class AppModel: ObservableObject {
     let store: ForjaStore
 
     init(fileURL: URL = ForjaStore.defaultFileURL()) {
-        self.store = ForjaStore(fileURL: fileURL)
+#if DEBUG
+        let resolvedFileURL: URL? = Self.isScreenshotDemoEnabled ? nil : fileURL
+#else
+        let resolvedFileURL: URL? = fileURL
+#endif
+        self.store = ForjaStore(fileURL: resolvedFileURL)
         loadBundledContent()
     }
 
@@ -46,6 +51,14 @@ final class AppModel: ObservableObject {
 
     func bootstrap() async {
         do {
+#if DEBUG
+            if Self.isScreenshotDemoEnabled {
+                try await seedScreenshotDemo()
+                database = await store.snapshot()
+                phase = .ready
+                return
+            }
+#endif
             try await store.load()
             database = await store.snapshot()
             phase = .ready
@@ -234,6 +247,67 @@ final class AppModel: ObservableObject {
     private func refresh() async {
         database = await store.snapshot()
     }
+
+#if DEBUG
+    private static var isScreenshotDemoEnabled: Bool {
+        ProcessInfo.processInfo.arguments.contains("-forja-ui-demo")
+    }
+
+    private func seedScreenshotDemo() async throws {
+        try await store.replace(with: ForjaDatabase())
+
+        let now = Date()
+        let calendar = Calendar(identifier: .gregorian)
+        let campaignStart = calendar.date(byAdding: .day, value: -18, to: now) ?? now
+        let profile = UserProfile(
+            name: "Alex",
+            goal: .consistency,
+            experience: .intermediate,
+            trainingPlace: .gym,
+            daysPerWeek: 5,
+            preferredDays: [.monday, .tuesday, .wednesday, .thursday, .friday],
+            preferredSessionMinutes: 70,
+            avatar: AvatarConfiguration(
+                body: .strong,
+                skinToneID: "skin-03",
+                hair: .fade,
+                hairColorID: "hair-02",
+                outfit: .smith,
+                outfitColorID: "cloth-ember",
+                armor: .leather,
+                accessory: .headband,
+                aura: .ember
+            ),
+            preferences: ProfilePreferences(reducedMotion: true),
+            xp: 240,
+            campaignStart: campaignStart,
+            createdAt: campaignStart
+        )
+        let created = try await store.createProfile(profile)
+
+        for (index, dayOffset) in [-9, -5, -2].enumerated() where !routine.days.isEmpty {
+            let date = calendar.date(byAdding: .day, value: dayOffset, to: now) ?? now
+            let day = routine.days[index % routine.days.count]
+            let session = try await store.startSession(profileID: created.id, day: day, on: date)
+
+            for entry in day.entries {
+                for setNumber in 1...max(1, entry.sets) {
+                    _ = try await store.logSet(
+                        sessionID: session.id,
+                        request: LogSetRequest(
+                            exerciseID: entry.exerciseID,
+                            setNumber: setNumber,
+                            weightKg: Double(20 + index * 5),
+                            reps: max(1, entry.repMin),
+                            rir: 2
+                        )
+                    )
+                }
+            }
+            _ = try await store.completeSession(session.id)
+        }
+    }
+#endif
 
     private func loadBundledContent() {
         do {

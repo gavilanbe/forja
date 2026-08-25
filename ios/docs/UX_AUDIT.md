@@ -68,11 +68,24 @@ Cambios acotados que hacen la app más coherente en iPhone real sin rediseñar p
 
 No se tocó `ForjaApp/Core`, ni IDs persistentes, ni reglas de dominio.
 
-## Validación pendiente con Xcode
+## Tercera revisión con Xcode y Simulator
 
-- iPhone SE o ancho equivalente a 320–360 pt.
-- iPhone de 390 pt y Max de 430 pt.
-- Dynamic Type en tamaños por defecto, XL y accesibilidad.
+La rama nativa se compila en GitHub Actions con Xcode 16.4 y el SDK de iOS 18.5, sin firma. La misma ejecución completa 9 pruebas XCTest, los 7 chequeos del núcleo y una compilación limpia para iOS Simulator.
+
+Se capturó el onboarding en iPhone SE (3.ª generación), iPhone 16 Pro y iPhone 16 Pro Max, además de una variante oscura. La inspección visual encontró y corrigió:
+
+- Una bienvenida demasiado alta en iPhone SE: ahora usa una composición compacta, mantiene todo el contenido visible y deja la acción principal fija sin taparlo.
+- Un segundo paso demasiado largo: objetivo y experiencia pasan a selectores compactos con una explicación contextual de la opción elegida.
+- Anchos irregulares en los siete días: ahora usan una rejilla de siete columnas iguales.
+- El nombre «Robusto» truncado en el estudio de avatar: las opciones mantienen dos columnas y una anchura mínima suficiente.
+- Una barra de acción gris y ajena a la identidad visual: ahora usa carbón, divisor tenue y el acento cálido de FORJA.
+
+Las capturas de las cinco pestañas usan datos genéricos, efímeros y exclusivos de compilaciones `DEBUG`. El modo no toca la base local de una persona real ni se incluye en la compilación de distribución.
+
+## Validación todavía pendiente
+
+- Dynamic Type en XL y tamaños de accesibilidad.
 - VoiceOver y orden de foco durante una misión.
 - Teclado decimal, temporizador en segundo plano y retorno desde bloqueo.
 - Reduce Motion, Increase Contrast y orientación vertical en dispositivo real.
+- Compilación final con Xcode 26 y SDK de iOS 26 antes de subir a TestFlight o App Store.

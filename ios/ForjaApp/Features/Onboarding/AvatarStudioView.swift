@@ -116,7 +116,7 @@ struct AvatarStudioView: View {
         selection: Binding<Value>,
         title: KeyPath<Value, String>
     ) -> some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: ForjaSpacing.xs)], spacing: ForjaSpacing.xs) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 124), spacing: ForjaSpacing.xs)], spacing: ForjaSpacing.xs) {
             ForEach(values) { value in
                 Button {
                     selection.wrappedValue = value

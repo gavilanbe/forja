@@ -219,26 +219,49 @@ struct OnboardingFlow: View {
                 title: "¿Qué quieres forjar?",
                 detail: "Esto personaliza la guía y deja clara tu intención; nunca cambia cargas por ti."
             )
-            VStack(spacing: 10) {
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible(), spacing: ForjaSpacing.xs),
+                    GridItem(.flexible(), spacing: ForjaSpacing.xs)
+                ],
+                spacing: ForjaSpacing.xs
+            ) {
                 ForEach(TrainingGoal.allCases) { goal in
-                    selectionCard(
+                    compactSelectionCard(
                         title: goal.title,
-                        detail: goal.detail,
                         selected: draft.goal == goal
                     ) { draft.goal = goal }
                 }
             }
+            ForjaCard(accent: ForjaTheme.gold) {
+                ForjaGroupHeader(title: draft.goal.title, detail: draft.goal.detail)
+            }
 
             Text("Experiencia").font(.forjaLabel()).foregroundStyle(ForjaTheme.gold)
-            VStack(spacing: 8) {
+            HStack(spacing: ForjaSpacing.xs) {
                 ForEach(ExperienceLevel.allCases) { level in
-                    selectionCard(
-                        title: level.title,
-                        detail: experienceDetail(level),
-                        selected: draft.experience == level
-                    ) { draft.experience = level }
+                    Button {
+                        draft.experience = level
+                    } label: {
+                        Text(experienceShortTitle(level))
+                            .font(.subheadline.weight(.bold))
+                            .lineLimit(2)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity, minHeight: 54)
+                            .padding(.horizontal, 4)
+                            .foregroundStyle(draft.experience == level ? ForjaTheme.ink : ForjaTheme.parchment)
+                            .background(draft.experience == level ? ForjaTheme.gold : ForjaTheme.coalRaised)
+                            .clipShape(RoundedRectangle(cornerRadius: ForjaRadius.control))
+                            .contentShape(RoundedRectangle(cornerRadius: ForjaRadius.control))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(level.title)
+                    .accessibilityAddTraits(draft.experience == level ? .isSelected : [])
                 }
             }
+            Text(experienceDetail(draft.experience))
+                .font(.caption)
+                .foregroundStyle(ForjaTheme.muted)
 
             Text("Dónde entrenas").font(.forjaLabel()).foregroundStyle(ForjaTheme.gold)
             Picker("Lugar", selection: $draft.place) {
@@ -293,7 +316,10 @@ struct OnboardingFlow: View {
             }
 
             Text("Días preferidos").font(.forjaLabel()).foregroundStyle(ForjaTheme.gold)
-            HStack(spacing: 7) {
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7),
+                spacing: 4
+            ) {
                 ForEach(Weekday.allCases) { weekday in
                     let selected = draft.preferredDays.contains(weekday)
                     Button {
@@ -434,6 +460,32 @@ struct OnboardingFlow: View {
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
+    private func compactSelectionCard(
+        title: String,
+        selected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: ForjaSpacing.xs) {
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(selected ? ForjaTheme.ink : ForjaTheme.muted)
+                Text(title)
+                    .font(.headline)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                Spacer(minLength: 0)
+            }
+            .padding(ForjaSpacing.sm)
+            .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+            .foregroundStyle(selected ? ForjaTheme.ink : ForjaTheme.parchment)
+            .background(selected ? ForjaTheme.gold : ForjaTheme.coalRaised)
+            .clipShape(RoundedRectangle(cornerRadius: ForjaRadius.control))
+            .contentShape(RoundedRectangle(cornerRadius: ForjaRadius.control))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
     private var actionBar: some View {
         VStack(spacing: 8) {
             Button(actionTitle) {
@@ -477,6 +529,14 @@ struct OnboardingFlow: View {
         case .beginner: "Necesito contexto y una entrada conservadora."
         case .intermediate: "Conozco los movimientos y registro mis cargas."
         case .advanced: "Quiero control fino sin automatismos agresivos."
+        }
+    }
+
+    private func experienceShortTitle(_ level: ExperienceLevel) -> String {
+        switch level {
+        case .beginner: "Empiezo"
+        case .intermediate: "Ya entreno"
+        case .advanced: "Avanzado"
         }
     }
 
