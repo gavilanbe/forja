@@ -1,0 +1,53 @@
+name: FORJA iOS CI
+
+on:
+  push:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios-ci.yml"
+  pull_request:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: forja-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Core tests and iOS build
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Test core
+        run: swift test --package-path ios
+
+      - name: Validate bundled content and game rules
+        working-directory: ios
+        run: swift run forja-core-checks
+
+      - name: Build for iOS Simulator
+        run: |
+          xcodebuild \
+            -project ios/ForjaIOS.xcodeproj \
+            -scheme FORJA \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/forja-derived-data" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
