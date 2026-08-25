@@ -58,16 +58,23 @@ capture_device() {
   xcrun simctl bootstatus "$SIMULATOR_UDID" -b
   xcrun simctl ui "$SIMULATOR_UDID" appearance light
   xcrun simctl install "$SIMULATOR_UDID" "$APP_PATH"
-  xcrun simctl launch "$SIMULATOR_UDID" "$BUNDLE_ID"
-  sleep 4
-  xcrun simctl io "$SIMULATOR_UDID" screenshot --type=png "$OUTPUT_DIR/$output_name-light.png"
 
   if [[ "$device_name" == "iPhone 16 Pro" ]]; then
-    xcrun simctl terminate "$SIMULATOR_UDID" "$BUNDLE_ID"
+    for step in 0 1 2 3 4 5; do
+      xcrun simctl launch "$SIMULATOR_UDID" "$BUNDLE_ID" -forja-onboarding-step "$step"
+      sleep 2
+      xcrun simctl io "$SIMULATOR_UDID" screenshot --type=png "$OUTPUT_DIR/$output_name-step-$step-light.png"
+      xcrun simctl terminate "$SIMULATOR_UDID" "$BUNDLE_ID"
+    done
+
     xcrun simctl ui "$SIMULATOR_UDID" appearance dark
     xcrun simctl launch "$SIMULATOR_UDID" "$BUNDLE_ID"
     sleep 2
-    xcrun simctl io "$SIMULATOR_UDID" screenshot --type=png "$OUTPUT_DIR/$output_name-dark.png"
+    xcrun simctl io "$SIMULATOR_UDID" screenshot --type=png "$OUTPUT_DIR/$output_name-step-0-dark.png"
+  else
+    xcrun simctl launch "$SIMULATOR_UDID" "$BUNDLE_ID"
+    sleep 4
+    xcrun simctl io "$SIMULATOR_UDID" screenshot --type=png "$OUTPUT_DIR/$output_name-step-0-light.png"
   fi
 
   xcrun simctl shutdown "$SIMULATOR_UDID"

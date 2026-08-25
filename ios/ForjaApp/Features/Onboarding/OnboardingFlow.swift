@@ -21,6 +21,16 @@ struct OnboardingFlow: View {
 
     private let totalSteps = 6
 
+    init(
+        initialStep: Int = 0,
+        onFinished: (() -> Void)? = nil,
+        onCancel: (() -> Void)? = nil
+    ) {
+        self.onFinished = onFinished
+        self.onCancel = onCancel
+        _step = State(initialValue: min(max(initialStep, 0), 5))
+    }
+
     var body: some View {
         ForjaPage {
             VStack(spacing: 0) {
@@ -29,15 +39,17 @@ struct OnboardingFlow: View {
                 } else if onCancel != nil {
                     cancelHeader
                 }
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 22) {
-                        stepContent
+                GeometryReader { proxy in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 22) {
+                            stepContent(compactHeight: proxy.size.height < 680)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 20)
+                        .padding(.bottom, ForjaSpacing.xl)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, step == 0 ? 28 : 20)
-                    .padding(.bottom, ForjaSpacing.xl)
+                    .scrollDismissesKeyboard(.interactively)
                 }
-                .scrollDismissesKeyboard(.interactively)
             }
             .safeAreaInset(edge: .bottom) {
                 actionBar
@@ -95,9 +107,9 @@ struct OnboardingFlow: View {
     }
 
     @ViewBuilder
-    private var stepContent: some View {
+    private func stepContent(compactHeight: Bool) -> some View {
         switch step {
-        case 0: welcomeStep
+        case 0: welcomeStep(compactHeight: compactHeight)
         case 1: identityStep
         case 2: objectiveStep
         case 3: scheduleStep
@@ -106,37 +118,55 @@ struct OnboardingFlow: View {
         }
     }
 
-    private var welcomeStep: some View {
-        VStack(spacing: 24) {
-            Spacer(minLength: 8)
+    private func welcomeStep(compactHeight: Bool) -> some View {
+        VStack(spacing: compactHeight ? 14 : 20) {
+            Spacer(minLength: compactHeight ? 0 : 6)
             ZStack {
                 Circle()
                     .fill(ForjaTheme.ember.opacity(0.12))
-                    .frame(width: 230, height: 230)
-                PixelAvatarView(avatar: draft.avatar)
-                    .frame(width: 125, height: 188)
+                    .frame(
+                        width: compactHeight ? 168 : 210,
+                        height: compactHeight ? 168 : 210
+                    )
+                PixelAvatarView(avatar: draft.avatar, animate: false)
+                    .frame(
+                        width: compactHeight ? 82 : 112,
+                        height: compactHeight ? 123 : 168
+                    )
             }
-            VStack(spacing: 10) {
+            VStack(spacing: compactHeight ? 6 : 8) {
                 Text("FORJA")
-                    .font(.forjaDisplay)
+                    .font(compactHeight ? .forjaScreenTitle : .forjaDisplay)
                     .tracking(4)
                 Text("Tu entrenamiento, convertido en una campaña que merece la pena continuar.")
-                    .font(.title3.weight(.semibold))
+                    .font(compactHeight ? .body.weight(.semibold) : .title3.weight(.semibold))
                     .multilineTextAlignment(.center)
                     .foregroundStyle(ForjaTheme.muted)
-            }
-
-            ForjaCard(accent: ForjaTheme.ember) {
-                VStack(alignment: .leading, spacing: 13) {
-                    onboardingPromise("figure.walk.motion", "Plan realista", "Tus días mandan; descansar no rompe la campaña.")
-                    onboardingPromise("bolt.shield.fill", "Funciona sin conexión", "Una serie se guarda antes de cualquier otra cosa.")
-                    onboardingPromise("heart.text.square.fill", "Sin castigos", "No premiamos dolor, fallo ni volumen innecesario.")
-                }
             }
 
             Text("Sin cuenta · Sin anuncios · Datos en tu iPhone")
                 .font(.caption)
                 .foregroundStyle(ForjaTheme.muted)
+
+            ForjaCard(accent: ForjaTheme.ember) {
+                VStack(alignment: .leading, spacing: compactHeight ? 10 : 13) {
+                    onboardingPromise(
+                        "figure.walk.motion",
+                        "Plan realista",
+                        compactHeight ? "Tus días mandan; descansar también cuenta." : "Tus días mandan; descansar no rompe la campaña."
+                    )
+                    onboardingPromise(
+                        "bolt.shield.fill",
+                        "Funciona sin conexión",
+                        compactHeight ? "Cada serie se guarda al instante." : "Una serie se guarda antes de cualquier otra cosa."
+                    )
+                    onboardingPromise(
+                        "heart.text.square.fill",
+                        "Sin castigos",
+                        compactHeight ? "Sin premiar dolor ni entrenar al fallo." : "No premiamos dolor, fallo ni volumen innecesario."
+                    )
+                }
+            }
         }
         .frame(maxWidth: 520)
         .frame(maxWidth: .infinity)
@@ -420,7 +450,12 @@ struct OnboardingFlow: View {
         .padding(.horizontal, 20)
         .padding(.top, 12)
         .padding(.bottom, 8)
-        .background(.ultraThinMaterial)
+        .background(ForjaTheme.coal.opacity(0.97))
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(ForjaTheme.parchment.opacity(0.08))
+                .frame(height: 1)
+        }
     }
 
     private var actionTitle: String {

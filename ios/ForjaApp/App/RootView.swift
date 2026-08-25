@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 struct RootView: View {
@@ -31,7 +32,7 @@ struct RootView: View {
                 }
             case .ready:
                 if model.needsOnboarding {
-                    OnboardingFlow()
+                    OnboardingFlow(initialStep: onboardingInitialStep)
                 } else {
                     MainTabView()
                 }
@@ -48,5 +49,17 @@ struct RootView: View {
         } message: {
             Text(model.presentedError ?? "Error desconocido")
         }
+    }
+
+    private var onboardingInitialStep: Int {
+#if DEBUG
+        let arguments = ProcessInfo.processInfo.arguments
+        if let flag = arguments.firstIndex(of: "-forja-onboarding-step"),
+           arguments.indices.contains(flag + 1),
+           let step = Int(arguments[flag + 1]) {
+            return step
+        }
+#endif
+        return 0
     }
 }
