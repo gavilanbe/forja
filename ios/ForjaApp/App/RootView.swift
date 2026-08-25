@@ -31,11 +31,7 @@ struct RootView: View {
                     .padding()
                 }
             case .ready:
-                if model.needsOnboarding {
-                    OnboardingFlow(initialStep: onboardingInitialStep)
-                } else {
-                    MainTabView()
-                }
+                readyContent
             }
         }
         .alert(
@@ -48,6 +44,31 @@ struct RootView: View {
             Button("Entendido", role: .cancel) { model.presentedError = nil }
         } message: {
             Text(model.presentedError ?? "Error desconocido")
+        }
+    }
+
+    @ViewBuilder
+    private var readyContent: some View {
+#if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-forja-workout-demo"),
+           let day = model.routine.days.first {
+            NavigationStack {
+                WorkoutView(day: day)
+            }
+        } else {
+            standardReadyContent
+        }
+#else
+        standardReadyContent
+#endif
+    }
+
+    @ViewBuilder
+    private var standardReadyContent: some View {
+        if model.needsOnboarding {
+            OnboardingFlow(initialStep: onboardingInitialStep)
+        } else {
+            MainTabView()
         }
     }
 

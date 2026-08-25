@@ -91,6 +91,11 @@ capture_device() {
       xcrun simctl io "$SIMULATOR_UDID" screenshot --type=png "$OUTPUT_DIR/$output_name-$tab-light.png"
       xcrun simctl terminate "$SIMULATOR_UDID" "$BUNDLE_ID"
     done
+
+    xcrun simctl launch "$SIMULATOR_UDID" "$BUNDLE_ID" -forja-ui-demo -forja-workout-demo
+    sleep 6
+    xcrun simctl io "$SIMULATOR_UDID" screenshot --type=png "$OUTPUT_DIR/$output_name-workout-light.png"
+    xcrun simctl terminate "$SIMULATOR_UDID" "$BUNDLE_ID"
   fi
 
   xcrun simctl shutdown "$SIMULATOR_UDID"

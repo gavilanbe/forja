@@ -88,6 +88,8 @@ La primera captura automática de Hoy coincidió con la carga del perfil fictici
 
 Campaña, Progreso, Códice y Perfil muestran una jerarquía coherente y una barra de pestañas estable en iPhone 16 Pro. La siguiente ronda captura también esas cinco pantallas en iPhone 16 Pro Max a 1320 × 2868 para obtener material base en un tamaño de 6,9 pulgadas aceptado por App Store Connect.
 
+La misión activa es el flujo principal del producto y no debe quedar fuera de la revisión automatizada. El arnés abre una misión real sobre el almacén efímero y captura peso, repeticiones, RIR, sugerencia y acciones de seguridad en iPhone 16 Pro y Pro Max.
+
 ## Validación todavía pendiente
 
 - Dynamic Type en XL y tamaños de accesibilidad.
