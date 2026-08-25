@@ -1,0 +1,861 @@
+[
+  {
+    "id": "press-inclinado-maquina",
+    "nombre": "Press inclinado convergente en máquina",
+    "musculos": "Pecho superior · deltoide anterior · tríceps",
+    "porQue": "Es el press prioritario: combina estabilidad, sobrecarga progresiva y alta proximidad al fallo sin que el equilibrio limite al pectoral.",
+    "colocacion": [
+      "Ajusta el asiento para que las asas queden frente a la zona superior-media del pecho, no delante de la cara.",
+      "Mantén cabeza, espalda alta y glúteos apoyados; pies firmes.",
+      "Coloca los codos a unos 45-60 grados del torso y las escápulas suavemente atrás y abajo."
+    ],
+    "ejecucion": [
+      "Libera la máquina y estabiliza los hombros antes de iniciar.",
+      "Baja hasta un estiramiento fuerte y controlado sin que el hombro se desplace hacia delante.",
+      "Empuja hacia delante y ligeramente hacia dentro; no descanses ni choques las placas arriba."
+    ],
+    "errores": [
+      "Asiento demasiado bajo.",
+      "Codos completamente abiertos.",
+      "Recortar la bajada.",
+      "Levantar los glúteos."
+    ],
+    "alternativas": [
+      "Press inclinado en Smith con banco a 20-30 grados",
+      "Press inclinado con mancuernas"
+    ]
+  },
+  {
+    "id": "remo-pecho-apoyado",
+    "nombre": "Remo con pecho apoyado",
+    "musculos": "Espalda media · dorsal · deltoide posterior",
+    "porQue": "Permite cargar la espalda con precisión sin convertir la zona lumbar en el factor limitante.",
+    "colocacion": [
+      "Apoya totalmente el pecho en el soporte.",
+      "Usa un agarre neutro o ligeramente pronado.",
+      "Ajusta el asiento para tirar hacia la parte baja del pecho o las costillas superiores."
+    ],
+    "ejecucion": [
+      "Deja que los hombros avancen ligeramente al extender los brazos.",
+      "Inicia llevando los codos atrás y tira hasta el torso sin despegar el pecho.",
+      "Pausa medio segundo y vuelve despacio hasta notar estiramiento."
+    ],
+    "errores": [
+      "Elevar los hombros como en un encogimiento.",
+      "Despegar el pecho.",
+      "Acortar la fase de estiramiento."
+    ],
+    "alternativas": [
+      "Remo sentado en polea con agarre neutro",
+      "Remo T con pecho apoyado"
+    ]
+  },
+  {
+    "id": "press-horizontal-maquina",
+    "nombre": "Press horizontal convergente en máquina",
+    "musculos": "Pecho · deltoide anterior · tríceps",
+    "porQue": "Añade un patrón horizontal estable para completar el volumen del pectoral con poca fatiga técnica.",
+    "colocacion": [
+      "Sitúa las asas a la altura de la mitad del pecho.",
+      "Pies firmes, pecho elevado y hombros apoyados.",
+      "Codos ligeramente por debajo de la línea del hombro."
+    ],
+    "ejecucion": [
+      "Baja hasta que los codos pasen ligeramente el torso si el hombro lo tolera.",
+      "Empuja sin despegar los hombros del respaldo.",
+      "Termina sin bloquear agresivamente los codos."
+    ],
+    "errores": [
+      "Asiento mal ajustado.",
+      "Hombros adelantados.",
+      "Rebote abajo.",
+      "Bloqueo violento."
+    ],
+    "alternativas": [
+      "Press banca en Smith",
+      "Press plano con mancuernas"
+    ]
+  },
+  {
+    "id": "jalon-neutro",
+    "nombre": "Jalón al pecho con agarre neutro",
+    "musculos": "Dorsal · espalda alta · bíceps",
+    "porQue": "Aporta el primer estímulo vertical de dorsal con un agarre cómodo para hombros y codos.",
+    "colocacion": [
+      "Agarra aproximadamente a la anchura de hombros y fija los muslos bajo las almohadillas.",
+      "Inclina el torso solo 10-15 grados hacia atrás.",
+      "Mantén el pecho alto sin hiperextender la zona lumbar."
+    ],
+    "ejecucion": [
+      "Lleva los codos hacia abajo y hacia las costillas.",
+      "Acerca el agarre al pecho superior sin convertirlo en un remo.",
+      "Sube controlando hasta un estiramiento claro del dorsal."
+    ],
+    "errores": [
+      "Balancearse.",
+      "Tirar detrás de la nuca.",
+      "Perder el control arriba.",
+      "Usar demasiado bíceps."
+    ],
+    "alternativas": [
+      "Jalón unilateral en polea",
+      "Dominada asistida con agarre neutro"
+    ]
+  },
+  {
+    "id": "elevacion-lateral-unilateral-polea",
+    "nombre": "Elevación lateral unilateral en polea",
+    "musculos": "Deltoide lateral",
+    "porQue": "Trabajo directo para el deltoide lateral. La quinta serie corrige el volumen semanal y lleva el total a 10 series.",
+    "colocacion": [
+      "Polea abajo y ligeramente detrás del cuerpo; sujétate con la mano libre.",
+      "Mantén una pequeña flexión fija del codo.",
+      "Eleva el brazo en el plano escapular, ligeramente por delante del torso."
+    ],
+    "ejecucion": [
+      "Guía con el codo hasta aproximadamente la altura del hombro.",
+      "Baja despacio y permite que el brazo cruce levemente el cuerpo.",
+      "Conserva el tronco quieto durante toda la serie."
+    ],
+    "errores": [
+      "Encoger el hombro.",
+      "Balancear el tronco.",
+      "Doblar y estirar el codo.",
+      "Subir muy por encima del hombro."
+    ],
+    "alternativas": [
+      "Elevación lateral en máquina",
+      "Elevación lateral sentada con mancuernas"
+    ]
+  },
+  {
+    "id": "curl-predicador-maquina",
+    "nombre": "Curl de bíceps en máquina predicador",
+    "musculos": "Bíceps",
+    "porQue": "Aísla el bíceps con una posición estable y hace sencillo medir la progresión.",
+    "colocacion": [
+      "Coloca las axilas cerca del borde superior del apoyo.",
+      "Mantén ambos brazos firmes contra la almohadilla.",
+      "Alinea muñeca y antebrazo sin doblar la mano hacia atrás."
+    ],
+    "ejecucion": [
+      "Baja hasta casi extender el codo, sin hiperextenderlo.",
+      "Flexiona sin despegar el brazo del banco.",
+      "Controla especialmente la parte inferior de la repetición."
+    ],
+    "errores": [
+      "Levantar el hombro.",
+      "Perder contacto con el apoyo.",
+      "Dejar caer la carga.",
+      "Usar un recorrido parcial."
+    ],
+    "alternativas": [
+      "Curl predicador en polea",
+      "Curl araña con mancuernas"
+    ]
+  },
+  {
+    "id": "extension-triceps-cabeza-cuerda",
+    "nombre": "Extensión de tríceps sobre la cabeza con cuerda",
+    "musculos": "Tríceps (porción larga)",
+    "porQue": "La posición del brazo favorece el trabajo de la porción larga del tríceps en una longitud muscular alta.",
+    "colocacion": [
+      "Coloca la polea abajo, ponte de espaldas y da un paso al frente.",
+      "Sitúa los codos a ambos lados de la cabeza.",
+      "Recoge las costillas y aprieta abdomen y glúteos."
+    ],
+    "ejecucion": [
+      "Deja que el codo se flexione profundamente con control.",
+      "Extiende solo el codo; el brazo superior apenas se mueve.",
+      "Separa ligeramente la cuerda al final sin perder la postura."
+    ],
+    "errores": [
+      "Arquear la espalda.",
+      "Abrir mucho los codos.",
+      "Mover el hombro.",
+      "Recortar el estiramiento."
+    ],
+    "alternativas": [
+      "Extensión unilateral sobre la cabeza en polea",
+      "Máquina de tríceps por encima de la cabeza"
+    ]
+  },
+  {
+    "id": "hack-squat",
+    "nombre": "Hack squat o sentadilla pendular",
+    "musculos": "Cuádriceps · glúteo",
+    "porQue": "Patrón de sentadilla estable que permite exigir al cuádriceps sin que el equilibrio o la espalda limiten la serie.",
+    "colocacion": [
+      "Pies a la anchura aproximada de hombros, en la zona media de la plataforma y con puntas ligeramente fuera.",
+      "Apoya toda la planta y orienta las rodillas en la dirección de los dedos.",
+      "Toma aire y bloquea el abdomen antes de bajar."
+    ],
+    "ejecucion": [
+      "Desciende hasta la mayor profundidad controlada y tolerable para la rodilla.",
+      "No rebotes en el fondo.",
+      "Empuja con todo el pie manteniendo pelvis y espalda contra el soporte."
+    ],
+    "errores": [
+      "Talones que se levantan.",
+      "Rodillas que colapsan hacia dentro.",
+      "Rebote en el fondo.",
+      "Profundidad forzada con dolor."
+    ],
+    "alternativas": [
+      "Belt squat",
+      "Prensa inclinada",
+      "Si molesta: sube algo los pies y reduce temporalmente la profundidad"
+    ]
+  },
+  {
+    "id": "prensa-45",
+    "nombre": "Prensa inclinada de 45 grados",
+    "musculos": "Cuádriceps · glúteo",
+    "porQue": "Suma volumen de cuádriceps en un patrón guiado y permite ajustar con precisión el recorrido a la tolerancia de rodilla.",
+    "colocacion": [
+      "Pies en la zona media-baja, aproximadamente a la anchura de hombros.",
+      "Mantén glúteos y zona lumbar apoyados.",
+      "Rodillas alineadas con los pies."
+    ],
+    "ejecucion": [
+      "Baja hasta antes de que la pelvis se enrolle y se separe del respaldo.",
+      "Empuja sin levantar los talones.",
+      "Termina sin bloquear violentamente las rodillas."
+    ],
+    "errores": [
+      "Recorrido mínimo.",
+      "Pelvis que se despega.",
+      "Rodillas hacia dentro.",
+      "Talones elevados."
+    ],
+    "alternativas": [
+      "Prensa horizontal",
+      "Belt squat",
+      "Hack squat con pies algo más altos"
+    ]
+  },
+  {
+    "id": "extension-cuadriceps",
+    "nombre": "Extensión de cuádriceps en máquina",
+    "musculos": "Cuádriceps",
+    "porQue": "Aporta trabajo directo del cuádriceps sin cargar la espalda y permite usar un rango de movimiento dosificable. En Pierna B cierra el segundo estímulo con bajo coste sistémico: no pretende ser un récord de carga.",
+    "colocacion": [
+      "Alinea el eje de giro de la máquina con el lateral de la rodilla.",
+      "Coloca el rodillo sobre el empeine o justo por encima del tobillo.",
+      "Espalda y glúteos pegados al asiento."
+    ],
+    "ejecucion": [
+      "Extiende hasta la posición más alta que toleres.",
+      "Aprieta un segundo arriba.",
+      "Baja controladamente sin dejar caer las placas."
+    ],
+    "errores": [
+      "Carga excesiva.",
+      "Golpear el tope.",
+      "Levantar la cadera.",
+      "Atravesar un rango doloroso.",
+      "En Pierna B: usar la misma carga del día pesado."
+    ],
+    "alternativas": [
+      "Extensión unilateral",
+      "Spanish squat isométrico si lo ha pautado un profesional",
+      "Ante dolor anterior: reduce carga y recorrido"
+    ]
+  },
+  {
+    "id": "curl-femoral-sentado",
+    "nombre": "Curl femoral sentado",
+    "musculos": "Isquiotibiales",
+    "porQue": "Entrena los isquiotibiales con la cadera flexionada y un estímulo alto en posición alargada.",
+    "colocacion": [
+      "Alinea la rodilla con el eje de la máquina.",
+      "Ajusta con firmeza la almohadilla sobre los muslos.",
+      "Mantén torso y pelvis contra el respaldo."
+    ],
+    "ejecucion": [
+      "Parte con las piernas casi extendidas.",
+      "Lleva los talones debajo del asiento y pausa brevemente.",
+      "Vuelve despacio hasta notar el estiramiento."
+    ],
+    "errores": [
+      "Levantar la cadera.",
+      "Rebotar.",
+      "Acortar el retorno.",
+      "Dejar floja la almohadilla de los muslos."
+    ],
+    "alternativas": [
+      "Curl femoral tumbado",
+      "Curl femoral unilateral de pie"
+    ]
+  },
+  {
+    "id": "abduccion-cadera",
+    "nombre": "Abducción de cadera en máquina",
+    "musculos": "Glúteo medio",
+    "porQue": "Añade trabajo directo de glúteo medio y ayuda a completar el volumen de la cadera sin fatiga axial.",
+    "colocacion": [
+      "Apoya la pelvis de forma estable contra el asiento.",
+      "Ajusta el rango inicial para que no exista molestia en la cadera.",
+      "Sujeta las asas sin tensar el cuello."
+    ],
+    "ejecucion": [
+      "Abre sin impulso y mantén un segundo la posición final.",
+      "Regresa lentamente sin dejar caer las placas.",
+      "Detén el recorrido antes de que la pelvis empiece a rotar."
+    ],
+    "errores": [
+      "Golpear las placas.",
+      "Balancear el torso.",
+      "Buscar una apertura que obliga a mover la pelvis."
+    ],
+    "alternativas": [
+      "Abducción en polea",
+      "Pasos laterales con banda como alternativa de menor carga"
+    ]
+  },
+  {
+    "id": "gemelo-pie",
+    "nombre": "Gemelo de pie en máquina",
+    "musculos": "Gemelo (gastrocnemio)",
+    "porQue": "Prioriza el gastrocnemio con la rodilla extendida y asegura un estímulo directo del gemelo.",
+    "colocacion": [
+      "Apoya la parte delantera del pie y deja el talón libre.",
+      "Mantén rodillas extendidas sin bloquearlas con violencia.",
+      "Estabiliza el tronco bajo las almohadillas."
+    ],
+    "ejecucion": [
+      "Baja durante dos segundos y mantén 1-2 segundos de estiramiento.",
+      "Sube todo lo posible sobre las puntas.",
+      "Pausa arriba antes de repetir."
+    ],
+    "errores": [
+      "Rebotar.",
+      "Hacer repeticiones cortas.",
+      "Doblar mucho las rodillas.",
+      "Perder el apoyo del antepié."
+    ],
+    "alternativas": [
+      "Gemelo de pie en prensa",
+      "Elevación unilateral sujetando una mancuerna"
+    ]
+  },
+  {
+    "id": "crunch-polea",
+    "nombre": "Crunch en polea",
+    "musculos": "Recto abdominal",
+    "porQue": "Entrena la flexión del tronco con una carga progresable y medible.",
+    "colocacion": [
+      "Coloca la cuerda junto a las sienes.",
+      "Arrodíllate con las caderas relativamente quietas.",
+      "Toma aire y fija la pelvis antes de iniciar."
+    ],
+    "ejecucion": [
+      "Acerca las costillas a la pelvis flexionando la columna.",
+      "Expulsa el aire al cerrar.",
+      "Vuelve hasta una extensión controlada sin perder tensión."
+    ],
+    "errores": [
+      "Tirar solo con los brazos.",
+      "Convertirlo en una bisagra de cadera.",
+      "Usar impulso."
+    ],
+    "alternativas": [
+      "Crunch en máquina",
+      "Crunch en banco declinado con carga"
+    ]
+  },
+  {
+    "id": "press-banca-smith",
+    "nombre": "Press banca plano en Smith",
+    "musculos": "Pecho · deltoide anterior · tríceps",
+    "porQue": "Segundo estímulo pesado de pecho con una trayectoria estable y fácilmente progresable.",
+    "colocacion": [
+      "Coloca el banco para que la barra baje hacia la mitad o zona ligeramente inferior del pecho.",
+      "Agarre algo más ancho que hombros; antebrazos casi verticales abajo.",
+      "Escápulas apoyadas, pecho elevado y pies firmes."
+    ],
+    "ejecucion": [
+      "Baja controladamente hasta tocar suavemente el pecho.",
+      "Empuja sin perder la posición de hombros y escápulas.",
+      "Bloquea con suavidad sin elevar los hombros."
+    ],
+    "errores": [
+      "Rebotar la barra.",
+      "Muñecas dobladas.",
+      "Banco mal alineado.",
+      "Glúteos despegados."
+    ],
+    "alternativas": [
+      "Press plano con barra",
+      "Press convergente horizontal en máquina"
+    ]
+  },
+  {
+    "id": "press-inclinado-mancuernas",
+    "nombre": "Press inclinado con mancuernas",
+    "musculos": "Pecho superior · deltoide anterior · tríceps",
+    "porQue": "Complementa el press plano con una inclinación baja y permite libertad individual de trayectoria.",
+    "colocacion": [
+      "Banco a 20-30 grados.",
+      "Mancuernas junto a la zona superior del pecho.",
+      "Codos a unos 45-60 grados y pies firmes."
+    ],
+    "ejecucion": [
+      "Baja hasta un estiramiento controlado.",
+      "Empuja arriba y ligeramente hacia dentro.",
+      "Mantén los glúteos apoyados y evita chocar las mancuernas."
+    ],
+    "errores": [
+      "Banco demasiado vertical.",
+      "Bajar sin control.",
+      "Juntar violentamente las mancuernas.",
+      "Arquearse en exceso."
+    ],
+    "alternativas": [
+      "Press inclinado en Smith",
+      "Press inclinado convergente en máquina"
+    ]
+  },
+  {
+    "id": "apertura-polea",
+    "nombre": "Apertura en polea",
+    "musculos": "Pecho",
+    "porQue": "Añade estímulo de aducción horizontal con poca carga articular y alta tensión continua.",
+    "colocacion": [
+      "Poleas aproximadamente a la altura del pecho y un pie adelantado.",
+      "Codos suavemente flexionados con un ángulo casi fijo.",
+      "Tronco estable y costillas contenidas."
+    ],
+    "ejecucion": [
+      "Abre hasta notar estiramiento en el pectoral.",
+      "Cierra describiendo un arco, como si abrazaras.",
+      "Pausa brevemente sin chocar las manos."
+    ],
+    "errores": [
+      "Convertirlo en press.",
+      "Llevar el hombro demasiado atrás.",
+      "Usar impulso.",
+      "Perder la posición del torso."
+    ],
+    "alternativas": [
+      "Pec deck",
+      "Apertura con mancuernas con recorrido conservador"
+    ]
+  },
+  {
+    "id": "press-hombro-maquina",
+    "nombre": "Press de hombro en máquina",
+    "musculos": "Deltoide anterior · tríceps",
+    "porQue": "Aporta trabajo directo del deltoide anterior y fuerza de empuje vertical con alta estabilidad.",
+    "colocacion": [
+      "Ajusta el asiento para que las asas empiecen a la altura de barbilla u orejas.",
+      "Codos ligeramente delante del torso.",
+      "Espalda apoyada, abdomen activo y costillas contenidas."
+    ],
+    "ejecucion": [
+      "Empuja arriba sin encoger los hombros exageradamente.",
+      "Baja hasta que el brazo supere ligeramente la horizontal si es cómodo.",
+      "Mantén una trayectoria suave y controlada."
+    ],
+    "errores": [
+      "Arquear la zona lumbar.",
+      "Bajar más de lo tolerable.",
+      "Juntar los codos hacia atrás.",
+      "Usar rebote."
+    ],
+    "alternativas": [
+      "Press sentado con mancuernas",
+      "Press de hombro en Smith"
+    ]
+  },
+  {
+    "id": "elevacion-lateral-polea-maquina",
+    "nombre": "Elevación lateral en polea o máquina",
+    "musculos": "Deltoide lateral",
+    "porQue": "Completa el segundo estímulo de deltoide lateral y sitúa el volumen semanal directo en 10 series.",
+    "colocacion": [
+      "Ajusta la máquina para que el apoyo quede cerca del codo, o usa la polea baja.",
+      "Mantén una flexión de codo fija.",
+      "Tronco quieto y hombros lejos de las orejas."
+    ],
+    "ejecucion": [
+      "Eleva en el plano escapular hasta aproximadamente la altura del hombro.",
+      "Controla la bajada y conserva tensión.",
+      "En la última serie, detente al perder altura o necesitar balanceo: ese es el fallo técnico."
+    ],
+    "errores": [
+      "Balancear.",
+      "Encoger trapecios.",
+      "Acelerar la bajada.",
+      "Convertir el movimiento en un press."
+    ],
+    "alternativas": [
+      "Elevación lateral unilateral en polea",
+      "Elevación lateral sentada con mancuernas"
+    ]
+  },
+  {
+    "id": "extension-triceps-polea-cuerda",
+    "nombre": "Extensión de tríceps en polea con cuerda",
+    "musculos": "Tríceps",
+    "porQue": "Aporta trabajo directo pesado de tríceps en una posición estable después de los presses.",
+    "colocacion": [
+      "Codos junto al cuerpo y hombros estables.",
+      "Colócate a una distancia que mantenga tensión arriba.",
+      "Torso levemente inclinado sin balanceo."
+    ],
+    "ejecucion": [
+      "Extiende por completo el codo y separa ligeramente la cuerda abajo.",
+      "Deja subir hasta que el antebrazo se acerque al bíceps.",
+      "Mantén el brazo superior quieto."
+    ],
+    "errores": [
+      "Mover los codos.",
+      "Usar la cadera.",
+      "Recortar la flexión.",
+      "Doblar las muñecas."
+    ],
+    "alternativas": [
+      "Jalón con barra recta o barra V",
+      "Máquina de fondos asistida"
+    ]
+  },
+  {
+    "id": "extension-triceps-cabeza-unilateral",
+    "nombre": "Extensión unilateral de tríceps sobre la cabeza",
+    "musculos": "Tríceps (porción larga)",
+    "porQue": "Termina el tríceps con énfasis en la porción larga y permite igualar ambos lados.",
+    "colocacion": [
+      "Polea detrás del cuerpo y brazo superior junto a la cabeza.",
+      "Abdomen y glúteos firmes.",
+      "Hombro en posición cómoda, sin forzar la rotación."
+    ],
+    "ejecucion": [
+      "Deja que el codo se flexione profundamente.",
+      "Extiende sin mover el hombro.",
+      "Controla la vuelta hasta recuperar el estiramiento."
+    ],
+    "errores": [
+      "Arquearse.",
+      "Separar el brazo de la cabeza.",
+      "Acelerar la bajada.",
+      "Perder el control del cable."
+    ],
+    "alternativas": [
+      "Extensión bilateral con cuerda",
+      "Extensión con mancuerna a una mano"
+    ]
+  },
+  {
+    "id": "jalon-pecho-medio",
+    "nombre": "Jalón al pecho con agarre medio",
+    "musculos": "Dorsal · espalda alta · bíceps",
+    "porQue": "Es el tirón vertical prioritario del segundo estímulo de espalda y admite una progresión pesada. Agarre semipronado o pronado.",
+    "colocacion": [
+      "Agarre algo más ancho que hombros.",
+      "Fija los muslos y eleva el pecho.",
+      "Inclina ligeramente el torso hacia atrás sin arquear la zona lumbar."
+    ],
+    "ejecucion": [
+      "Lleva los codos hacia abajo y acerca el agarre al pecho superior.",
+      "Controla completamente la subida.",
+      "Permite un estiramiento alto sin perder el control del hombro."
+    ],
+    "errores": [
+      "Tirar detrás de la nuca.",
+      "Balancearse.",
+      "Recortar la subida.",
+      "Convertirlo en un remo."
+    ],
+    "alternativas": [
+      "Dominada asistida",
+      "Jalón neutro o unilateral"
+    ]
+  },
+  {
+    "id": "remo-unilateral-polea",
+    "nombre": "Remo unilateral en polea orientado al dorsal",
+    "musculos": "Dorsal",
+    "porQue": "Entrena el dorsal con el codo cerca del cuerpo y permite corregir diferencias entre lados.",
+    "colocacion": [
+      "Polea aproximadamente a la altura del abdomen.",
+      "Torso estable y cuadrado hacia delante.",
+      "Deja que el hombro avance ligeramente al estirar."
+    ],
+    "ejecucion": [
+      "Lleva el codo cerca del cuerpo y hacia la cadera.",
+      "Pausa brevemente al final.",
+      "Vuelve despacio sin rotar el torso."
+    ],
+    "errores": [
+      "Girar el tronco.",
+      "Tirar hacia el pecho alto.",
+      "Elevar el hombro.",
+      "Acelerar el retorno."
+    ],
+    "alternativas": [
+      "Remo unilateral en máquina",
+      "Remo bajo con agarre neutro estrecho"
+    ]
+  },
+  {
+    "id": "remo-alto-pecho-apoyado",
+    "nombre": "Remo alto con pecho apoyado",
+    "musculos": "Espalda alta · deltoide posterior",
+    "porQue": "Complementa el remo del lunes con más énfasis en espalda alta y deltoide posterior.",
+    "colocacion": [
+      "Pecho totalmente pegado al soporte.",
+      "Codos abiertos unos 60-80 grados.",
+      "Ajusta el asiento para tirar hacia el pecho superior."
+    ],
+    "ejecucion": [
+      "Tira guiando con los codos.",
+      "No eleves los hombros hacia las orejas.",
+      "Regresa hasta que los omóplatos se separen ligeramente."
+    ],
+    "errores": [
+      "Despegar el torso.",
+      "Encoger hombros.",
+      "Tirar demasiado bajo.",
+      "Perder el control excéntrico."
+    ],
+    "alternativas": [
+      "Remo alto en polea con cuerda",
+      "Reverse row en máquina con pecho apoyado"
+    ]
+  },
+  {
+    "id": "reverse-pec-deck",
+    "nombre": "Reverse pec deck",
+    "musculos": "Deltoide posterior",
+    "porQue": "Proporciona trabajo directo y estable al deltoide posterior, difícil de cubrir solo con remos.",
+    "colocacion": [
+      "Ajusta el asiento para que las manos queden a la altura de hombros.",
+      "Pecho contra el soporte.",
+      "Codos ligeramente flexionados y hombros bajos."
+    ],
+    "ejecucion": [
+      "Abre guiando con los codos.",
+      "Detén el recorrido antes de llevar las manos exageradamente atrás.",
+      "Vuelve despacio hasta notar estiramiento."
+    ],
+    "errores": [
+      "Convertirlo en retracción escapular pesada.",
+      "Encoger trapecios.",
+      "Usar impulso.",
+      "Hiperextender el hombro."
+    ],
+    "alternativas": [
+      "Apertura inversa en poleas",
+      "Pájaro con pecho apoyado"
+    ]
+  },
+  {
+    "id": "curl-inclinado-mancuernas",
+    "nombre": "Curl inclinado con mancuernas",
+    "musculos": "Bíceps (cabeza larga)",
+    "porQue": "Entrena el bíceps con el hombro extendido y una alta tensión en posición alargada.",
+    "colocacion": [
+      "Banco a 45-60 grados.",
+      "Brazos colgando detrás de la línea del torso.",
+      "Hombros pegados al banco y muñecas neutras."
+    ],
+    "ejecucion": [
+      "Supina mientras subes.",
+      "Mantén el codo atrás sin adelantarlo.",
+      "Baja hasta casi extender el brazo y controla el estiramiento."
+    ],
+    "errores": [
+      "Adelantar el codo.",
+      "Despegar el hombro.",
+      "Balancear.",
+      "Perder la supinación."
+    ],
+    "alternativas": [
+      "Curl bayesiano en polea",
+      "Curl alterno sentado con respaldo"
+    ]
+  },
+  {
+    "id": "curl-martillo-cuerda",
+    "nombre": "Curl martillo con cuerda en polea",
+    "musculos": "Braquial · braquiorradial · bíceps",
+    "porQue": "Completa el brazo con énfasis en braquial y braquiorradial, además del bíceps.",
+    "colocacion": [
+      "Manos neutras, pulgares hacia arriba.",
+      "Codos junto al cuerpo.",
+      "Da un pequeño paso atrás para mantener tensión."
+    ],
+    "ejecucion": [
+      "Flexiona sin elevar el hombro.",
+      "Separa ligeramente la cuerda al final.",
+      "Baja hasta casi extender los brazos."
+    ],
+    "errores": [
+      "Usar la cadera.",
+      "Mover los codos.",
+      "Doblar las muñecas.",
+      "Recortar la bajada."
+    ],
+    "alternativas": [
+      "Curl martillo con mancuernas",
+      "Curl cruzado unilateral en polea"
+    ]
+  },
+  {
+    "id": "rumano-smith",
+    "nombre": "Peso muerto rumano en Smith",
+    "musculos": "Isquiotibiales · glúteo",
+    "porQue": "Es el movimiento principal para femorales y glúteos; la Smith estabiliza la trayectoria y facilita concentrarse en la bisagra.",
+    "colocacion": [
+      "Pies a la anchura de caderas y barra pegada a los muslos.",
+      "Rodillas ligeramente flexionadas; el ángulo cambia muy poco.",
+      "Toma aire, bloquea el abdomen y mantén cuello neutro."
+    ],
+    "ejecucion": [
+      "Empuja la cadera atrás y desliza la barra junto a muslos y piernas.",
+      "Baja hasta un estiramiento fuerte antes de redondear la espalda o perder la pelvis.",
+      "Empuja el suelo y lleva la cadera delante; termina erguido sin inclinarte atrás."
+    ],
+    "errores": [
+      "Convertirlo en sentadilla.",
+      "Separar la barra.",
+      "Mirar exageradamente arriba.",
+      "Hiperextender al final."
+    ],
+    "alternativas": [
+      "Peso muerto rumano con barra libre",
+      "Extensión de cadera a 45 grados con carga"
+    ]
+  },
+  {
+    "id": "hip-thrust-maquina",
+    "nombre": "Hip thrust en máquina",
+    "musculos": "Glúteo",
+    "porQue": "Añade trabajo de glúteo en una posición acortada y complementa la bisagra del rumano.",
+    "colocacion": [
+      "Coloca los pies para que las tibias queden aproximadamente verticales arriba.",
+      "Barbilla ligeramente recogida y costillas abajo.",
+      "Asegura la almohadilla sobre la pelvis, no sobre el abdomen."
+    ],
+    "ejecucion": [
+      "Baja la cadera con control.",
+      "Empuja con los talones y contrae el glúteo.",
+      "Termina con una ligera retroversión pélvica, no con extensión lumbar."
+    ],
+    "errores": [
+      "Pies demasiado lejos o cerca.",
+      "Hiperextender la espalda.",
+      "Rebotar abajo.",
+      "Perder la barbilla recogida."
+    ],
+    "alternativas": [
+      "Hip thrust con barra",
+      "Puente de glúteo en Smith"
+    ]
+  },
+  {
+    "id": "curl-femoral-tumbado",
+    "nombre": "Curl femoral tumbado",
+    "musculos": "Isquiotibiales",
+    "porQue": "Completa los isquiotibiales mediante flexión de rodilla y equilibra el estímulo del rumano.",
+    "colocacion": [
+      "Alinea las rodillas con el eje de giro.",
+      "Rodillo justo por encima de los talones.",
+      "Caderas contra el banco y abdomen activo."
+    ],
+    "ejecucion": [
+      "Flexiona sin levantar la pelvis.",
+      "Aprieta arriba.",
+      "Baja lentamente hasta casi extender las piernas."
+    ],
+    "errores": [
+      "Levantar la cadera.",
+      "Arquear la espalda.",
+      "Usar impulso.",
+      "Dejar caer el peso."
+    ],
+    "alternativas": [
+      "Curl femoral sentado",
+      "Curl unilateral de pie"
+    ]
+  },
+  {
+    "id": "bulgara-smith",
+    "nombre": "Sentadilla búlgara en Smith",
+    "musculos": "Cuádriceps · glúteo",
+    "porQue": "Aporta un segundo estímulo de cuádriceps y glúteos con mucha carga relativa por pierna y poco peso total.",
+    "colocacion": [
+      "Pie delantero suficientemente adelantado para mantener el talón apoyado.",
+      "Pie trasero en un soporte no demasiado alto.",
+      "Caderas orientadas al frente y rodilla alineada con los dedos."
+    ],
+    "ejecucion": [
+      "Baja verticalmente hasta donde controles y la rodilla tolere.",
+      "Empuja con todo el pie delantero.",
+      "Usa la pierna trasera principalmente como apoyo."
+    ],
+    "errores": [
+      "Dar un paso demasiado corto.",
+      "Impulsarse con la pierna trasera.",
+      "Colapsar la rodilla.",
+      "Forzar profundidad dolorosa."
+    ],
+    "alternativas": [
+      "Zancada inversa en Smith",
+      "Belt squat",
+      "Prensa unilateral"
+    ]
+  },
+  {
+    "id": "gemelo-sentado",
+    "nombre": "Gemelo sentado",
+    "musculos": "Gemelo (sóleo)",
+    "porQue": "Prioriza el sóleo con la rodilla flexionada y complementa el gemelo de pie.",
+    "colocacion": [
+      "Rodillas aproximadamente a 90 grados.",
+      "Apoya el antepié y deja los talones libres.",
+      "Ajusta la almohadilla sin comprimir de forma incómoda el muslo."
+    ],
+    "ejecucion": [
+      "Baja hasta un estiramiento profundo y pausa 1-2 segundos.",
+      "Sube lo máximo posible.",
+      "Controla cada repetición sin rebote."
+    ],
+    "errores": [
+      "Repeticiones cortas y rápidas.",
+      "No pausar abajo.",
+      "Mover los pies durante la serie."
+    ],
+    "alternativas": [
+      "Gemelo sentado con discos",
+      "Gemelo en prensa con rodillas flexionadas"
+    ]
+  },
+  {
+    "id": "elevacion-rodillas-colgado",
+    "nombre": "Elevación de rodillas colgado",
+    "musculos": "Core · flexores de cadera",
+    "porQue": "Entrena el core con control pélvico y añade una segunda exposición semanal.",
+    "colocacion": [
+      "Cuelga con hombros activos y sin balanceo.",
+      "Junta ligeramente las piernas.",
+      "Inicia con abdomen firme."
+    ],
+    "ejecucion": [
+      "Eleva las rodillas.",
+      "Al final, enrolla ligeramente la pelvis hacia el pecho.",
+      "Baja con control hasta detener cualquier balanceo."
+    ],
+    "errores": [
+      "Columpiarse.",
+      "Limitarse a flexionar la cadera.",
+      "Encoger hombros.",
+      "Dejar caer las piernas."
+    ],
+    "alternativas": [
+      "Elevación de rodillas en silla romana",
+      "Reverse crunch en banco"
+    ]
+  }
+]

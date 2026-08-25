@@ -1,15 +1,23 @@
 # FORJA
 
-PWA móvil y **offline-first** que convierte el programa de hipertrofia de seis
-semanas de Nahuel y Carlos en una campaña de RPG de 16 bits con identidad
-visual propia: acero forjado, brasas y maquinaria de gimnasio.
+Producto móvil **offline-first** que convierte un programa de hipertrofia de
+seis semanas en una campaña de RPG de 16 bits con identidad visual propia:
+acero forjado, brasas y maquinaria de gimnasio.
+
+Este repositorio contiene dos implementaciones del mismo producto:
+
+- La PWA original (React + TypeScript + Dexie) permanece en la raíz y es la
+  referencia funcional y de compatibilidad de datos.
+- La aplicación nativa para iPhone (SwiftUI + persistencia local) vive en
+  [`ios/`](ios/README.md). Sus reglas específicas están en
+  [`ios/AGENTS.md`](ios/AGENTS.md).
 
 - **Bloque** → campaña · **semana** → capítulo · **entrenamiento** → misión ·
   **descanso** → campamento · **racha semanal** → Llama de la Forja.
 - Registrar una serie tarda menos de cinco segundos y nunca espera a la red.
 - Tras la primera carga con conexión, la app entera funciona sin cobertura.
 
-## Comandos
+## Comandos de la PWA
 
 ```sh
 npm install          # dependencias
@@ -19,6 +27,18 @@ npm run build        # type-check + build de producción en dist/
 npm run preview      # sirve dist/ para probar el build (y el service worker)
 npm run icons        # regenera public/icons/*.png desde el arte pixel
 ```
+
+## Comandos de iPhone
+
+```sh
+cd ios
+swift test
+open ForjaIOS.xcodeproj
+```
+
+La app nativa requiere iOS 17 o posterior. La compilación de interfaz y los
+simuladores requieren Xcode completo; los controles del dominio también pueden
+ejecutarse con `swift run forja-core-checks`.
 
 Para probar el build con la base de GitHub Pages:
 
@@ -77,6 +97,7 @@ src/
   screens/  Hoy · Misión · Resumen · Campaña · Progreso · Códice · Perfil
   styles/   tokens, base y componentes (CSS propio, sin librerías)
 tests/      Vitest: progresión, racha, temporizador, fechas, base local
+ios/        app nativa SwiftUI, proyecto Xcode, núcleo y pruebas propias
 ```
 
 ## Rutina y perfiles
@@ -97,9 +118,10 @@ a `main` ejecuta tests, hace build con `VITE_BASE_PATH=/forja/` y publica
 `dist/` en `https://gavilanbe.github.io/forja/`. Manifest, scope, start_url,
 iconos y service worker funcionan desde ese subpath (verificado en local).
 
-Pasos cuando se autorice publicar: crear el repositorio `gavilanbe/forja`,
-hacer push de `main` y activar Pages → Source: GitHub Actions
-(ver `docs/DEPLOYMENT.md`). **No se ha creado remoto ni publicado nada.**
+El repositorio remoto es `gavilanbe/forja`. Los cambios de la app nativa se
+preparan en una rama separada; no requieren ni deben disparar un despliegue de
+la PWA. La publicación web continúa gobernada por `main` y por
+`docs/DEPLOYMENT.md`.
 
 ## Limitaciones conocidas de la v1
 
