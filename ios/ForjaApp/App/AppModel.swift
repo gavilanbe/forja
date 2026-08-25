@@ -254,8 +254,6 @@ final class AppModel: ObservableObject {
     }
 
     private func seedScreenshotDemo() async throws {
-        try await store.replace(with: ForjaDatabase())
-
         let now = Date()
         let calendar = Calendar(identifier: .gregorian)
         let campaignStart = calendar.date(byAdding: .day, value: -18, to: now) ?? now
@@ -283,29 +281,61 @@ final class AppModel: ObservableObject {
             campaignStart: campaignStart,
             createdAt: campaignStart
         )
-        let created = try await store.createProfile(profile)
+        let campaign = CampaignRecord(
+            profileID: profile.id,
+            startDate: campaignStart,
+            joinedDate: campaignStart,
+            routineVersion: routine.version,
+            scheduleID: "custom-5",
+            weeklyTarget: 5
+        )
+        var sessions: [TrainingSession] = []
+        var setLogs: [LoggedSet] = []
 
         for (index, dayOffset) in [-9, -5, -2].enumerated() where !routine.days.isEmpty {
             let date = calendar.date(byAdding: .day, value: dayOffset, to: now) ?? now
             let day = routine.days[index % routine.days.count]
-            let session = try await store.startSession(profileID: created.id, day: day, on: date)
+            let session = TrainingSession(
+                profileID: profile.id,
+                campaignID: campaign.id,
+                dayID: day.id,
+                dateKey: ForjaDate.dateKey(date),
+                campaignWeek: ForjaDate.campaignWeek(start: campaignStart, on: date),
+                status: .completed,
+                startedAt: date,
+                completedAt: calendar.date(byAdding: .minute, value: 70, to: date),
+                currentExerciseIndex: day.entries.count,
+                prescriptionSnapshot: day
+            )
+            sessions.append(session)
 
             for entry in day.entries {
                 for setNumber in 1...max(1, entry.sets) {
-                    _ = try await store.logSet(
-                        sessionID: session.id,
-                        request: LogSetRequest(
+                    setLogs.append(
+                        LoggedSet(
+                            profileID: profile.id,
+                            sessionID: session.id,
                             exerciseID: entry.exerciseID,
                             setNumber: setNumber,
                             weightKg: Double(20 + index * 5),
                             reps: max(1, entry.repMin),
-                            rir: 2
+                            rir: 2,
+                            createdAt: date
                         )
                     )
                 }
             }
-            _ = try await store.completeSession(session.id)
         }
+
+        try await store.replace(
+            with: ForjaDatabase(
+                profiles: [profile],
+                campaigns: [campaign],
+                sessions: sessions,
+                setLogs: setLogs,
+                activeProfileID: profile.id
+            )
+        )
     }
 #endif
 

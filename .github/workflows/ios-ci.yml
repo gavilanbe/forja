@@ -52,6 +52,27 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build
 
+      - name: Build Release without signing
+        run: |
+          xcodebuild \
+            -project ios/ForjaIOS.xcodeproj \
+            -scheme FORJA \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/forja-release-derived-data" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Verify Release excludes visual QA hooks
+        run: |
+          APP_BINARY="$RUNNER_TEMP/forja-release-derived-data/Build/Products/Release-iphonesimulator/FORJA.app/FORJA"
+          test -x "$APP_BINARY"
+          if strings "$APP_BINARY" | grep -Eq 'forja-ui-demo|forja-onboarding-step|forja-tab'; then
+            echo "A DEBUG-only visual QA hook leaked into the Release binary."
+            exit 1
+          fi
+
       - name: Launch on iPhone simulators
         run: |
           ios/scripts/ci_simulator_smoke.sh \

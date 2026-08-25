@@ -82,6 +82,12 @@ Se capturó el onboarding en iPhone SE (3.ª generación), iPhone 16 Pro y iPhon
 
 Las capturas de las cinco pestañas usan datos genéricos, efímeros y exclusivos de compilaciones `DEBUG`. El modo no toca la base local de una persona real ni se incluye en la compilación de distribución.
 
+## Cuarta revisión de producto
+
+La primera captura automática de Hoy coincidió con la carga del perfil ficticio. El dataset de QA ahora se construye en una sola operación en memoria y la captura espera el arranque frío; no se oculta el estado de carga, pero tampoco se confunde con la pantalla que se pretende revisar.
+
+Campaña, Progreso, Códice y Perfil muestran una jerarquía coherente y una barra de pestañas estable en iPhone 16 Pro. La siguiente ronda captura también esas cinco pantallas en iPhone 16 Pro Max a 1320 × 2868 para obtener material base en un tamaño de 6,9 pulgadas aceptado por App Store Connect.
+
 ## Validación todavía pendiente
 
 - Dynamic Type en XL y tamaños de accesibilidad.

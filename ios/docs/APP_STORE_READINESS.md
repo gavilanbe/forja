@@ -12,7 +12,9 @@ El Mac ya dispone de espacio suficiente y es compatible con Xcode 26.3. GitHub A
 - 9 pruebas XCTest superadas.
 - 7 chequeos deterministas del núcleo superados.
 - Compilación sin firma para iOS Simulator con Xcode 16.4.
+- Compilación Release separada y control automático de que los hooks de QA visual no entren en el binario.
 - Capturas revisadas en iPhone SE (3.ª generación), iPhone 16 Pro y iPhone 16 Pro Max.
+- Pipeline de capturas de ficha preparado para iPhone 16 Pro Max a 1320 × 2868, uno de los tamaños de 6,9 pulgadas aceptados por App Store Connect.
 - Icono provisional original de 1024 × 1024, PNG opaco y sin esquinas preaplicadas.
 - Datos de demostración para capturas aislados tras `#if DEBUG`; la compilación Release no los contiene.
 
@@ -35,10 +37,13 @@ El Mac ya dispone de espacio suficiente y es compatible con Xcode 26.3. GitHub A
 
 ## App Store Connect
 
-- Nombre, subtítulo, descripción y palabras clave.
-- Icono 1024 × 1024 sin transparencia.
-- Capturas de iPhone.
-- URL pública de privacidad y URL de soporte.
+- Borrador completo de metadatos en `APP_STORE_METADATA_ES.md`, con límites comprobados y nombre diferenciado frente a apps «Forja» ya existentes.
+- Páginas estáticas de soporte y privacidad preparadas y revisadas en `ios/store-pages`; todavía no están desplegadas y las URLs finales devuelven 404.
+- MX y SPF de `ngavilan.dev` presentes; confirmar que `support@ngavilan.dev` entrega correctamente antes de publicar.
+- Confirmar disponibilidad del nombre y copiar nombre, subtítulo, descripción y palabras clave desde el borrador.
+- Sustituir o aprobar como final el icono provisional de 1024 × 1024 sin transparencia.
+- Seleccionar y, si procede, componer las capturas definitivas de iPhone.
+- Desplegar y comprobar la URL pública de privacidad y la URL de soporte.
 - Declaración de privacidad: revisar que siga sin transmisión de datos.
 - Cuestionario de edad y declaración de dispositivo médico: FORJA no es un dispositivo médico.
 - DSA para distribución en la UE.

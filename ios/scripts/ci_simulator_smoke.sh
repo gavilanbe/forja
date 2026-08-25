@@ -72,18 +72,25 @@ capture_device() {
     sleep 2
     xcrun simctl io "$SIMULATOR_UDID" screenshot --type=png "$OUTPUT_DIR/$output_name-step-0-dark.png"
     xcrun simctl terminate "$SIMULATOR_UDID" "$BUNDLE_ID"
-
-    xcrun simctl ui "$SIMULATOR_UDID" appearance light
-    for tab in today campaign progress codex profile; do
-      xcrun simctl launch "$SIMULATOR_UDID" "$BUNDLE_ID" -forja-ui-demo -forja-tab "$tab"
-      sleep 3
-      xcrun simctl io "$SIMULATOR_UDID" screenshot --type=png "$OUTPUT_DIR/$output_name-$tab-light.png"
-      xcrun simctl terminate "$SIMULATOR_UDID" "$BUNDLE_ID"
-    done
   else
     xcrun simctl launch "$SIMULATOR_UDID" "$BUNDLE_ID"
     sleep 4
     xcrun simctl io "$SIMULATOR_UDID" screenshot --type=png "$OUTPUT_DIR/$output_name-step-0-light.png"
+    xcrun simctl terminate "$SIMULATOR_UDID" "$BUNDLE_ID"
+  fi
+
+  if [[ "$device_name" == "iPhone 16 Pro" || "$device_name" == "iPhone 16 Pro Max" ]]; then
+    xcrun simctl ui "$SIMULATOR_UDID" appearance light
+    for tab in today campaign progress codex profile; do
+      xcrun simctl launch "$SIMULATOR_UDID" "$BUNDLE_ID" -forja-ui-demo -forja-tab "$tab"
+      if [[ "$tab" == "today" ]]; then
+        sleep 6
+      else
+        sleep 3
+      fi
+      xcrun simctl io "$SIMULATOR_UDID" screenshot --type=png "$OUTPUT_DIR/$output_name-$tab-light.png"
+      xcrun simctl terminate "$SIMULATOR_UDID" "$BUNDLE_ID"
+    done
   fi
 
   xcrun simctl shutdown "$SIMULATOR_UDID"
