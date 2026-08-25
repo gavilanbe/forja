@@ -51,3 +51,18 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/forja-derived-data" \
             CODE_SIGNING_ALLOWED=NO \
             build
+
+      - name: Launch on iPhone simulators
+        run: |
+          ios/scripts/ci_simulator_smoke.sh \
+            "$RUNNER_TEMP/forja-derived-data" \
+            "$RUNNER_TEMP/forja-screenshots"
+
+      - name: Upload simulator screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: forja-simulator-screenshots
+          path: ${{ runner.temp }}/forja-screenshots
+          if-no-files-found: warn
+          retention-days: 7
