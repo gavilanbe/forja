@@ -22,6 +22,17 @@ Implementación nativa de FORJA en SwiftUI. Convive con la PWA original y conser
 4. Comprueba el identificador `dev.ngavilan.forja` y elige un simulador de iPhone.
 5. Ejecuta la aplicación.
 
+Antes de preparar un archivo para App Store, ejecuta:
+
+```sh
+ios/scripts/release_preflight.sh
+```
+
+El preflight exige Xcode 26, SDK de iOS 26, licencia aceptada, equipo de firma,
+repositorio limpio, páginas públicas disponibles, pruebas verdes y un binario
+Release sin los hooks de QA. Cuando todo pase, `archive_release.sh` crea el
+archivo firmado sin subirlo; necesita `FORJA_TEAM_ID`.
+
 El proyecto apunta a iOS 17 o posterior. Esto permite una base moderna sin obligarnos a usar SwiftData: el almacén es explícito, portable y compatible con las copias de la PWA.
 
 ## Validación sin Xcode

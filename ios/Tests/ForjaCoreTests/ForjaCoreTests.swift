@@ -179,6 +179,56 @@ final class ForjaCoreTests: XCTestCase {
         XCTAssertEqual(snapshot.profiles.first?.xp, 2 * XPReward.plannedSet)
     }
 
+    func testDeletingProfileRemovesRelatedTrainingDataAndSelectsRemainingProfile() async throws {
+        let store = ForjaStore()
+        let deletedProfile = makeProfile()
+        let remainingProfile = makeProfile(days: 4, preferred: [.monday, .tuesday, .thursday, .saturday])
+        try await store.createProfile(deletedProfile)
+        try await store.createProfile(remainingProfile)
+
+        let session = try await store.startSession(profileID: deletedProfile.id, day: makeDay())
+        _ = try await store.logSet(
+            sessionID: session.id,
+            request: LogSetRequest(exerciseID: "press", setNumber: 1, weightKg: 40, reps: 10, rir: 2)
+        )
+        try await store.recordDiscomfort(
+            sessionID: session.id,
+            exerciseID: "press",
+            level: 3,
+            action: .adapt,
+            note: "Reducir carga"
+        )
+        try await store.saveNote(
+            profileID: deletedProfile.id,
+            sessionID: session.id,
+            exerciseID: "press",
+            text: "Nota temporal"
+        )
+        try await store.saveTimer(
+            RestTimerState(
+                sessionID: session.id,
+                exerciseID: "press",
+                totalSeconds: 90,
+                targetEndAt: Date().addingTimeInterval(90),
+                pausedRemainingSeconds: nil
+            )
+        )
+        try await store.selectProfile(deletedProfile.id)
+
+        try await store.deleteProfile(deletedProfile.id)
+        let snapshot = await store.snapshot()
+
+        XCTAssertEqual(snapshot.profiles.map(\.id), [remainingProfile.id])
+        XCTAssertEqual(snapshot.activeProfileID, remainingProfile.id)
+        XCTAssertFalse(snapshot.campaigns.contains { $0.profileID == deletedProfile.id })
+        XCTAssertFalse(snapshot.sessions.contains { $0.profileID == deletedProfile.id })
+        XCTAssertFalse(snapshot.setLogs.contains { $0.profileID == deletedProfile.id })
+        XCTAssertFalse(snapshot.discomforts.contains { $0.profileID == deletedProfile.id })
+        XCTAssertFalse(snapshot.gameEvents.contains { $0.profileID == deletedProfile.id })
+        XCTAssertFalse(snapshot.notes.contains { $0.profileID == deletedProfile.id })
+        XCTAssertNil(snapshot.activeTimer)
+    }
+
     func testNativeBackupRoundTrip() throws {
         let original = ForjaDatabase(profiles: [makeProfile()])
         let data = try BackupService.export(original, now: Date(timeIntervalSince1970: 10))
@@ -218,6 +268,45 @@ final class ForjaCoreTests: XCTestCase {
         XCTAssertEqual(imported.database.profiles.first?.name, "Nombre importado")
         XCTAssertEqual(imported.database.profiles.first?.daysPerWeek, 5)
         XCTAssertEqual(imported.database.campaigns.count, 1)
+    }
+
+    func testPWABackupRejectsSetWithoutAValidSession() throws {
+        let json = """
+        {
+          "app": "forja",
+          "schemaVersion": 2,
+          "tables": {
+            "profiles": [{
+              "id": "profile-1",
+              "name": "Alex",
+              "weeklyTarget": 3,
+              "campaignStart": "2026-08-24"
+            }],
+            "prefs": [],
+            "sessions": [],
+            "setLogs": [{
+              "id": "set-1",
+              "profileId": "profile-1",
+              "sessionId": "missing-session",
+              "exerciseId": "press",
+              "setNumber": 1,
+              "weightKg": 40,
+              "reps": 10,
+              "rir": 2
+            }],
+            "discomforts": [], "gameEvents": [], "kv": []
+          }
+        }
+        """
+
+        XCTAssertThrowsError(
+            try BackupService.importBackup(
+                Data(json.utf8),
+                routine: RoutineContent(version: "1.0.0", days: [], schedules: [], campaignWeeks: 6, chapters: [])
+            )
+        ) { error in
+            XCTAssertEqual(error as? BackupError, .brokenRelationship("serie sin sesión o perfil"))
+        }
     }
 
     private func makeProfile(

@@ -1,6 +1,6 @@
 # Ficha de App Store — español (borrador)
 
-Este documento prepara la primera ficha pública sin escribir todavía en App Store Connect. Los textos respetan los límites vigentes de Apple a 25 de agosto de 2026.
+Este documento prepara la primera ficha pública. Los textos respetan los límites vigentes de Apple a 26 de agosto de 2026.
 
 ## Identidad
 
@@ -60,7 +60,7 @@ No se repiten términos que ya aparecen en el nombre o el subtítulo.
 - **Privacidad:** `https://ngavilan.dev/forja/privacy`
 - **Marketing opcional:** `https://ngavilan.dev/forja`
 
-Estas rutas deben publicarse y comprobarse sin autenticación antes de introducirlas en App Store Connect.
+Las tres rutas están publicadas en Cloudflare Pages y comprobadas sin autenticación.
 
 ## Privacidad en App Store Connect
 
@@ -91,8 +91,7 @@ Respuesta propuesta, sujeta a una última revisión del binario Release:
 ## Pendiente antes de copiar la ficha
 
 1. Confirmar la disponibilidad del nombre.
-2. Publicar y revisar las páginas de soporte y privacidad.
-3. Confirmar derechos sobre rutina, textos del códice, fuente y assets definitivos.
-4. Revisar las respuestas de privacidad contra el binario Release final.
-5. Completar el cuestionario de edad, DSA y contacto de revisión personalmente.
-6. Seleccionar las capturas definitivas de 6,9 pulgadas obtenidas con Xcode 26.
+2. Confirmar derechos sobre rutina, textos del códice, fuente y assets definitivos.
+3. Revisar las respuestas de privacidad contra el binario Release final.
+4. Completar el cuestionario de edad, DSA y contacto de revisión personalmente.
+5. Aprobar o sustituir las cinco capturas comerciales de 6,9 pulgadas.
