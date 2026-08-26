@@ -20,7 +20,7 @@ mkdir -p "$ARCHIVE_DIR"
 
 DEVELOPER_DIR="$XCODE_DEVELOPER" xcodebuild \
   -project "$IOS_DIR/ForjaIOS.xcodeproj" \
-  -scheme ForjaIOS \
+  -scheme FORJA \
   -configuration Release \
   -destination 'generic/platform=iOS' \
   -archivePath "$ARCHIVE_PATH" \

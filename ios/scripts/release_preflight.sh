@@ -92,14 +92,14 @@ pass "Pruebas del nucleo"
 
 DEVELOPER_DIR="$XCODE_DEVELOPER" xcodebuild \
   -project "$PROJECT_FILE" \
-  -scheme ForjaIOS \
+  -scheme FORJA \
   -configuration Release \
   -destination 'generic/platform=iOS Simulator' \
   -derivedDataPath "$DERIVED_DIR" \
   CODE_SIGNING_ALLOWED=NO \
   build
 
-APP_BINARY="$DERIVED_DIR/Build/Products/Release-iphonesimulator/ForjaIOS.app/ForjaIOS"
+APP_BINARY="$DERIVED_DIR/Build/Products/Release-iphonesimulator/FORJA.app/FORJA"
 [[ -x "$APP_BINARY" ]] || fail "No se encontro el binario Release"
 if strings "$APP_BINARY" | rg -q 'forja-ui-demo|forja-onboarding-step|forja-tab|forja-workout-demo'; then
   fail "El binario Release contiene hooks exclusivos de QA"
