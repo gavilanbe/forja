@@ -58,7 +58,13 @@ if rg -q 'DEVELOPMENT_TEAM = [A-Z0-9]+;' "$PROJECT_FILE/project.pbxproj"; then
 fi
 rg -q 'TEAM_ID="\$\{FORJA_TEAM_ID:-\}"' "$SCRIPT_DIR/archive_release.sh" \
   || fail "El archivado debe recibir el Team ID mediante FORJA_TEAM_ID"
-pass "Identidad, version y firma automatica preparadas sin publicar el Team ID"
+rg -q '"CODE_SIGN_STYLE=Manual"' "$SCRIPT_DIR/archive_release.sh" \
+  || fail "El archive debe fijar firma manual para no depender de una cuenta de Xcode"
+rg -q '"CODE_SIGN_IDENTITY=Apple Distribution"' "$SCRIPT_DIR/archive_release.sh" \
+  || fail "El archive debe usar una identidad Apple Distribution"
+rg -q '"PROVISIONING_PROFILE_SPECIFIER=\$PROFILE_NAME"' "$SCRIPT_DIR/archive_release.sh" \
+  || fail "El archive debe recibir un perfil App Store instalado"
+pass "Proyecto automatico y archive manual preparados sin publicar el Team ID"
 
 [[ -f "$PRIVACY_FILE" ]] || fail "Falta PrivacyInfo.xcprivacy"
 [[ "$(plutil -extract NSPrivacyTracking raw -o - "$PRIVACY_FILE")" == "false" ]] \

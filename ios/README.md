@@ -28,10 +28,12 @@ Antes de preparar un archivo para App Store, ejecuta:
 ios/scripts/release_preflight.sh
 ```
 
-El preflight exige Xcode 26, SDK de iOS 26, licencia aceptada, equipo de firma,
+El preflight exige Xcode 26, SDK de iOS 26, licencia aceptada, configuración de firma,
 repositorio limpio, páginas públicas disponibles, pruebas verdes y un binario
 Release sin los hooks de QA. Cuando todo pase, `archive_release.sh` crea el
-archivo firmado sin subirlo; necesita `FORJA_TEAM_ID`.
+archivo firmado sin subirlo. Necesita `FORJA_TEAM_ID`, el perfil
+`FORJA App Store 1.0` instalado y, si la identidad vive en un llavero dedicado,
+`FORJA_SIGNING_KEYCHAIN`. Ninguno de esos valores se guarda en el proyecto.
 
 El proyecto apunta a iOS 17 o posterior. Esto permite una base moderna sin obligarnos a usar SwiftData: el almacén es explícito, portable y compatible con las copias de la PWA.
 
