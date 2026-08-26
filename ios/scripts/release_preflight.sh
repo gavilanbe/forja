@@ -51,10 +51,14 @@ rg -q 'CURRENT_PROJECT_VERSION = 1;' "$PROJECT_FILE/project.pbxproj" \
   || fail "Numero de build inesperado"
 rg -q 'INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;' "$PROJECT_FILE/project.pbxproj" \
   || fail "Falta la declaracion de cifrado"
-if rg -q 'DEVELOPMENT_TEAM = "";' "$PROJECT_FILE/project.pbxproj"; then
-  fail "Falta seleccionar el equipo de firma de Apple en el proyecto"
+rg -q 'CODE_SIGN_STYLE = Automatic;' "$PROJECT_FILE/project.pbxproj" \
+  || fail "La firma del target debe estar configurada como automatica"
+if rg -q 'DEVELOPMENT_TEAM = [A-Z0-9]+;' "$PROJECT_FILE/project.pbxproj"; then
+  fail "El Team ID personal no debe persistirse en el proyecto publico"
 fi
-pass "Identidad, version y firma configuradas"
+rg -q 'TEAM_ID="\$\{FORJA_TEAM_ID:-\}"' "$SCRIPT_DIR/archive_release.sh" \
+  || fail "El archivado debe recibir el Team ID mediante FORJA_TEAM_ID"
+pass "Identidad, version y firma automatica preparadas sin publicar el Team ID"
 
 [[ -f "$PRIVACY_FILE" ]] || fail "Falta PrivacyInfo.xcprivacy"
 [[ "$(plutil -extract NSPrivacyTracking raw -o - "$PRIVACY_FILE")" == "false" ]] \
